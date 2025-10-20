@@ -6,7 +6,11 @@ import typer
 from .config import load_config, save_config, load_stats, save_stats, CONFIG_PATH, STATS_PATH
 from .scrubber import Scrubber
 
-app = typer.Typer(add_completion=False, help="Emoji Scrubber CLI (scrubb)")
+app = typer.Typer(
+    add_completion=False, 
+    help="Emoji Scrubber CLI - Remove emojis from text files with persistent statistics tracking",
+    no_args_is_help=True
+)
 
 def _resolve_target(arg_path: str | None, executor: str | None, default_root: Path) -> Path:
     """
@@ -24,19 +28,20 @@ def _resolve_target(arg_path: str | None, executor: str | None, default_root: Pa
     # treat as subpath under default root
     return (default_root / arg_path).resolve()
 
-@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    help="Scrub emojis from text files and directories. Removes emojis from text files while preserving structure. Processes files recursively and provides detailed statistics about the operation."
+)
 def main(
     ctx: typer.Context,
-    path: str = typer.Argument(None, help="Optional path or subpath; see docs"),
-    executor: str = typer.Argument(None, help="Use '.' to indicate 'ALL' (recursive)"),
+    path: str = typer.Argument(None, help="Target path (optional) - defaults to configured root directory"),
+    executor: str = typer.Argument(None, help="Must be '.' to indicate recursive processing of all files"),
 ):
     """
-    Scrub emojis from files/directories.
-
-    Examples:
-      scrubb .
-      scrubb src .
-      scrubb ./docs .
+    Scrub emojis from text files and directories.
+    
+    Removes emojis from text files while preserving structure. Processes files recursively
+    and provides detailed statistics about the operation.
     """
     cfg = load_config()
     target = _resolve_target(path, executor, Path(cfg["default_root"]).resolve())
@@ -96,13 +101,17 @@ def main(
     gs["scoped_scrub"] = scoped
     save_stats(gs)
 
-@app.command()
+@app.command(
+    help="View persistent statistics accumulated across all scrubbing runs. Displays comprehensive statistics maintained across all scrubbing operations."
+)
 def stats(
-    top: bool = typer.Option(False, "--top", help="Show top 5 scrubbed emoji"),
-    reset: bool = typer.Option(False, "--reset", help="Reset ALL persistent statistics"),
+    top: bool = typer.Option(False, "--top", help="Show top 5 most frequently removed emoji tokens"),
+    reset: bool = typer.Option(False, "--reset", help="Reset ALL persistent statistics to zero"),
 ):
     """
-    Print global/persistent statistics (across runs).
+    View persistent statistics accumulated across all scrubbing runs.
+    
+    Displays comprehensive statistics maintained across all scrubbing operations.
     """
     if reset:
         from .config import DEFAULT_STATS
@@ -126,19 +135,18 @@ def stats(
             for emoji_token, count in items:
                 typer.echo(f"  {emoji_token}  -> {count}")
 
-@app.command()
+@app.command(
+    help="Manage scrubb configuration settings and view current configuration. View and modify scrubb's configuration settings, including the default root directory."
+)
 def config(
-    p: str = typer.Option(None, "-p", help="Default root path"),
-    show: bool = typer.Option(False, "--show", help="Show current default root path"),
-    edit: bool = typer.Option(False, "--edit", help="Apply provided -p as the new default"),
+    p: str = typer.Option(None, "-p", help="Path to set as new default root directory"),
+    show: bool = typer.Option(False, "--show", help="Show current configuration (default behavior)"),
+    edit: bool = typer.Option(False, "--edit", help="Apply the provided path (-p) as new default root"),
 ):
     """
-    Manage scrubb configuration.
+    Manage scrubb configuration settings and view current configuration.
     
-    Examples:
-      scrubb config --show              # Show current configuration
-      scrubb config -p /path --edit     # Set new default root
-      scrubb config                     # Show current configuration (default)
+    View and modify scrubb's configuration settings, including the default root directory.
     """
     cfg = load_config()
     
