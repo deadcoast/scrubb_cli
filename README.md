@@ -1,8 +1,10 @@
 # scrubb
 
-> **Emoji Scrubber & Folder Organizer CLI** - Remove emojis from text files and organize cluttered directories
+> **Multi Function Scrubber CLI** - `scrubb`
+- Remove emojis from document / code files
+- Organize cluttered directories and clean them up
 
-A command-line tool that removes emojis from text files across your codebase and organizes files into categorized folders, with comprehensive statistics tracking and configurable ignore patterns.
+`scrubb` Is a command-line tool that removes emojis from text files across your codebase and organizes files into categorized folders, with comprehensive statistics tracking and configurable ignore patterns.
 
 ## Features
 
