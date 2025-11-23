@@ -5,6 +5,8 @@
 | Command | Description | Function |
 |---------|-------------|----------|
 | `scrubb main [PATH] .` | Scrub emojis from files/directories | Remove emojis from text files with detailed output |
+| `scrubb --folder` | Organize files into categories | Move files to categorized folders and remove empty directories |
+| `scrubb --folder --dry` | Preview folder organization | Show what would happen without making changes |
 | `scrubb stats` | Show persistent statistics | Display accumulated statistics across all runs |
 | `scrubb stats --top` | Show top 5 emoji tokens | Display most frequently removed emoji tokens |
 | `scrubb stats --reset` | Reset all statistics | Clear all persistent statistics |
@@ -17,6 +19,174 @@
 ---
 
 ## Full Command Reference
+
+### Folder Cleanup Command: `scrubb --folder`
+
+**Purpose**: Organize files into categorized folders and remove empty directories.
+
+**Syntax**:
+```bash
+# Preview mode (dry-run)
+scrubb --folder --dry
+
+# Actual execution
+scrubb --folder
+```
+
+**Options**:
+- `--dry`: Enable dry-run mode to preview changes without executing them
+
+**Interactive Workflow (Regular Mode)**:
+1. System prompts: "Enter the directory path to clean up:"
+2. User provides a directory path (absolute, relative, or with tilde expansion)
+3. System validates the path exists and is a directory
+4. System recursively scans all files in the directory tree
+5. Files are categorized by extension and moved to organized folders
+6. Empty directories are automatically removed
+7. Statistics are displayed
+
+**Interactive Workflow (Dry-Run Mode)**:
+1. System displays prominent dry-run mode indicator
+2. System prompts: "Enter the directory path to clean up:"
+3. User provides a directory path (absolute, relative, or with tilde expansion)
+4. System validates the path exists and is a directory
+5. System recursively scans all files in the directory tree
+6. System simulates all operations without making changes
+7. Comprehensive preview is displayed with detailed information
+8. System reminds user that no changes were made
+
+**File Categories**:
+
+Files are organized into the following structure within a `Scrubbed/` folder:
+
+- **Images** → `Scrubbed/Images/`
+  - `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.svg`, `.webp`, `.ico`, `.tiff`, `.tif`
+
+- **Video** → `Scrubbed/Video/`
+  - `.mp4`, `.avi`, `.mov`, `.mkv`, `.flv`, `.wmv`, `.webm`, `.m4v`, `.mpeg`, `.mpg`
+
+- **Markdown** → `Scrubbed/Docs/Markdown/`
+  - `.md`, `.markdown`
+
+- **Documents** → `Scrubbed/Docs/Other Docs/`
+  - `.pdf`, `.doc`, `.docx`, `.txt`, `.rtf`, `.odt`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, `.csv`
+
+- **Development** → `Scrubbed/Development/`
+  - `.py`, `.js`, `.ts`, `.jsx`, `.tsx`, `.java`, `.c`, `.cpp`, `.h`, `.hpp`, `.rs`, `.go`, `.rb`, `.php`, `.html`, `.css`, `.scss`, `.json`, `.xml`, `.yaml`, `.yml`, `.toml`, `.sh`, `.bash`, `.sql`, `.r`, `.swift`, `.kt`
+
+**Conflict Resolution**:
+- If a file with the same name exists in the destination, the system appends a numeric suffix
+- Example: `file.txt` → `file_1.txt`, `file_2.txt`, etc.
+- Original file extensions are always preserved
+
+**Empty Folder Removal**:
+- After moving files, all empty directories are automatically removed
+- The root directory and Scrubbed folder are protected from deletion
+- Nested empty directories are removed recursively
+
+**Output (Regular Mode)**: Displays organization statistics including:
+- Total files moved
+- Files moved per category
+- Number of empty folders removed
+- Error count and list of files that couldn't be processed
+
+**Example Output (Regular Mode)**:
+```
+Folder cleanup complete:
+  Files moved: 42
+    Images: 15
+    Video: 3
+    Docs/Markdown: 8
+    Docs/Other Docs: 12
+    Development: 4
+  Empty folders removed: 7
+  Errors: 0
+```
+
+**Output (Dry-Run Mode)**: Displays comprehensive preview including:
+- Summary statistics (files to move, directories to create/remove, conflicts, skipped files)
+- Files by category with counts
+- List of directories that would be created
+- Detailed file operations grouped by category
+- Name conflicts with original and resolved names
+- Skipped files with reasons
+- Empty directories that would be removed
+- Potential errors (permission issues, inaccessible files)
+- Reminder that no changes were made
+
+**Example Output (Dry-Run Mode)**:
+```
+======================================================================
+DRY RUN PREVIEW - No changes will be made
+======================================================================
+
+📊 SUMMARY
+  Files to move: 42
+  Directories to create: 5
+  Empty directories to remove: 7
+  Files to skip: 3
+  Potential conflicts: 2
+
+📁 FILES BY CATEGORY
+  Development: 4 files
+  Docs/Markdown: 8 files
+  Docs/Other Docs: 12 files
+  Images: 15 files
+  Video: 3 files
+
+➕ DIRECTORIES TO CREATE
+  /path/to/dir/Scrubbed
+  /path/to/dir/Scrubbed/Images
+  /path/to/dir/Scrubbed/Video
+  /path/to/dir/Scrubbed/Docs/Markdown
+  /path/to/dir/Scrubbed/Development
+
+📦 FILE OPERATIONS
+  Images:
+    photo.jpg → /path/to/dir/Scrubbed/Images/photo.jpg
+    image.png → /path/to/dir/Scrubbed/Images/image.png
+    ...
+
+⚠️  NAME CONFLICTS
+  report.pdf → report_1.pdf
+    Category: Docs/Other Docs
+
+⏭️  SKIPPED FILES
+  /path/to/dir/unknown.xyz - Unknown extension
+
+🗑️  EMPTY DIRECTORIES TO REMOVE
+  /path/to/dir/nested/empty
+
+✅ No potential errors detected
+
+======================================================================
+This was a DRY RUN - No files were moved or modified
+Run without --dry flag to execute these changes
+======================================================================
+```
+
+**Error Handling**:
+- Invalid path: Displays error message and exits
+- Permission errors: Logs error, continues processing other files
+- File access errors: Increments error counter, continues processing
+
+**Dry-Run Mode Benefits**:
+- **Safe Preview**: See exactly what will happen before making changes
+- **Conflict Detection**: Identify name conflicts and see how they'll be resolved
+- **Error Prevention**: Detect potential permission issues before execution
+- **Verification**: Ensure files are categorized correctly
+- **Planning**: Understand the scope of changes before committing
+
+**Recommended Workflow**:
+1. Run `scrubb --folder --dry` to preview changes
+2. Review the detailed output
+3. Run `scrubb --folder` to execute if everything looks correct
+
+**Exit Codes**:
+- `0`: Success
+- `1`: Invalid directory path or critical error
+
+---
 
 ### Main Command: `scrubb main`
 
@@ -238,6 +408,12 @@ scrubb main .
 
 # Scrub specific directory
 scrubb main src .
+
+# Preview folder cleanup (dry-run)
+scrubb --folder --dry
+
+# Execute folder cleanup
+scrubb --folder
 
 # Check statistics
 scrubb stats

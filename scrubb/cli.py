@@ -5,6 +5,8 @@ import typer
 
 from .config import load_config, save_config, load_stats, save_stats, CONFIG_PATH, STATS_PATH
 from .scrubber import Scrubber
+from .file_classifier import FileClassifier
+from .folder_organizer import FolderOrganizer, DryRunFormatter
 
 app = typer.Typer(
     add_completion=False, 
@@ -174,3 +176,70 @@ def config(
         typer.echo("Error: Provide a path with -p when using --edit", err=True)
         typer.echo("Example: scrubb config -p /path/to/code --edit")
         raise typer.Exit(code=1)
+
+@app.command(
+    help="Organize files into categorized folders and remove empty directories. Recursively scans the specified directory, categorizes files by type, and moves them to organized folders."
+)
+def folder(
+    dry: bool = typer.Option(False, "--dry", help="Preview changes without executing them")
+):
+    """
+    Organize files into categorized folders and remove empty directories.
+    
+    Recursively scans the specified directory, categorizes files by type (Images, Video, 
+    Documents, Development), and moves them to organized folders within a 'Scrubbed' directory.
+    Empty directories are removed after file organization.
+    """
+    # Display dry-run mode header if enabled
+    if dry:
+        typer.secho("\n🔍 DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
+    
+    # Prompt for directory path
+    path_input = typer.prompt("Enter the directory path to organize")
+    
+    # Resolve path (handle absolute, relative, and tilde expansion)
+    target_path = Path(path_input).expanduser().resolve()
+    
+    # Validate that path exists and is a directory
+    if not target_path.exists():
+        typer.secho(f"Error: Path does not exist: {target_path}", fg="red", err=True)
+        raise typer.Exit(code=1)
+    
+    if not target_path.is_dir():
+        typer.secho(f"Error: Path is not a directory: {target_path}", fg="red", err=True)
+        raise typer.Exit(code=1)
+    
+    # Create classifier and organizer with dry_run parameter
+    classifier = FileClassifier()
+    organizer = FolderOrganizer(target_path, classifier, dry_run=dry)
+    
+    # Execute organization
+    typer.echo(f"Organizing files in: {target_path}")
+    stats = organizer.organize()
+    
+    # Display statistics based on mode
+    if dry:
+        # Dry-run mode - use DryRunFormatter for detailed output
+        formatted_output = DryRunFormatter.format_output(stats, target_path)
+        typer.echo(formatted_output)
+    else:
+        # Actual mode - show completion information
+        typer.echo("\n" + "="*50)
+        typer.secho("Folder cleanup complete!", fg="green", bold=True)
+        typer.echo("="*50)
+        
+        typer.secho(f"\nFiles moved: {stats.files_moved}", fg="cyan", bold=True)
+        
+        if stats.files_by_category:
+            typer.secho("\nFiles moved by category:", fg="cyan")
+            for category, count in sorted(stats.files_by_category.items()):
+                typer.echo(f"  {category}: {count}")
+        
+        typer.secho(f"\nEmpty folders removed: {stats.empty_folders_removed}", fg="cyan", bold=True)
+        
+        if stats.errors > 0:
+            typer.secho(f"\nErrors encountered: {stats.errors}", fg="red", bold=True)
+            if stats.error_files:
+                typer.secho("\nError files:", fg="red")
+                for error_file in stats.error_files:
+                    typer.echo(f"  [X] {error_file}")

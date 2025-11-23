@@ -1,17 +1,28 @@
 # scrubb
 
-> **Emoji Scrubber CLI** - Remove emojis from text files with persistent statistics
+> **Emoji Scrubber & Folder Organizer CLI** - Remove emojis from text files and organize cluttered directories
 
-A command-line tool that removes emojis from text files across your codebase, with comprehensive statistics tracking and configurable ignore patterns.
+A command-line tool that removes emojis from text files across your codebase and organizes files into categorized folders, with comprehensive statistics tracking and configurable ignore patterns.
 
 ## Features
 
+### Emoji Scrubbing
 - **Smart Emoji Detection**: Removes emojis from a wide range of Unicode ranges including emoticons, symbols, flags, and more
 - **Persistent Statistics**: Tracks global statistics across all runs with detailed per-emoji breakdowns
 - **Configurable Ignore Patterns**: Skip common directories like `node_modules`, `.git`, `__pycache__`, etc.
+- **Safe File Processing**: Only processes text files with recognized extensions
+
+### Folder Cleanup
+- **Automatic File Categorization**: Organizes files by type (Images, Video, Documents, Development)
+- **Dry-Run Mode**: Preview all changes before executing with `--dry` flag
+- **Smart Conflict Resolution**: Handles duplicate file names with incremental numbering
+- **Empty Folder Removal**: Automatically cleans up empty directories after organization
+- **Recursive Processing**: Scans and organizes files at all directory depths
+- **Detailed Statistics**: Reports files moved, categories used, and folders removed
+
+### General
 - **Cross-Platform**: Works on Windows, macOS, and Linux with proper XDG compliance
 - **Flexible Path Resolution**: Supports relative paths, absolute paths, and subdirectory targeting
-- **Safe File Processing**: Only processes text files with recognized extensions
 
 ## Installation
 
@@ -25,6 +36,7 @@ pipx install .
 
 ## Quick Start
 
+### Emoji Scrubbing
 ```bash
 # Scrub emojis from current directory
 scrubb .
@@ -45,9 +57,27 @@ scrubb stats --top
 scrubb config -p /path/to/code --edit
 ```
 
+### Folder Cleanup
+```bash
+# Preview changes without executing (dry-run mode)
+scrubb --folder --dry
+# (You'll be prompted to enter the directory path)
+
+# Organize files in a directory (actual execution)
+scrubb --folder
+# (You'll be prompted to enter the directory path)
+
+# Files will be organized into:
+# - Scrubbed/Images/
+# - Scrubbed/Video/
+# - Scrubbed/Docs/Markdown/
+# - Scrubbed/Docs/Other Docs/
+# - Scrubbed/Development/
+```
+
 ## Usage
 
-### Basic Commands
+### Emoji Scrubbing Commands
 
 ```bash
 scrubb [PATH] [EXECUTOR]
@@ -56,7 +86,7 @@ scrubb [PATH] [EXECUTOR]
 - `PATH`: Optional path or subpath (defaults to configured root)
 - `EXECUTOR`: Use `.` to indicate recursive processing (required)
 
-### Examples
+#### Examples
 
 ```bash
 # Scrub from configured default root
@@ -75,6 +105,98 @@ scrubb config -p --show
 # Set new default root
 scrubb config -p /path/to/code --edit
 ```
+
+### Folder Cleanup Command
+
+```bash
+# Preview mode (recommended first)
+scrubb --folder --dry
+
+# Actual execution
+scrubb --folder
+```
+
+#### Dry-Run Mode (Preview)
+
+Before making any changes, use dry-run mode to preview what will happen:
+
+```bash
+scrubb --folder --dry
+```
+
+**Dry-run mode provides:**
+- Complete list of files that would be moved with source and destination paths
+- Detection of name conflicts and how they would be resolved
+- List of directories that would be created
+- List of empty directories that would be removed
+- Files that would be skipped (unknown extensions)
+- Potential errors (permission issues, inaccessible files)
+- Detailed statistics for all operations
+
+**Important**: Dry-run mode makes NO changes to your file system. It's a safe way to verify the cleanup behavior before committing to changes.
+
+#### Regular Mode (Execution)
+
+When you run the command without `--dry`:
+1. You'll be prompted to enter a directory path
+2. The system validates the path exists
+3. All files are recursively scanned and categorized by type
+4. Files are moved to organized subdirectories within a "Scrubbed" folder
+5. Empty directories are automatically removed
+6. Statistics are displayed showing the results
+
+#### Folder Cleanup Workflow
+
+```
+Your Directory/
+├── photo.jpg          →  Scrubbed/Images/photo.jpg
+├── video.mp4          →  Scrubbed/Video/video.mp4
+├── notes.md           →  Scrubbed/Docs/Markdown/notes.md
+├── report.pdf         →  Scrubbed/Docs/Other Docs/report.pdf
+├── script.py          →  Scrubbed/Development/script.py
+└── nested/
+    └── file.txt       →  Scrubbed/Docs/Other Docs/file.txt
+```
+
+After cleanup, empty directories (like `nested/`) are automatically removed.
+
+#### File Type Categories
+
+The folder cleanup feature organizes files into these categories:
+
+**Images** (`Scrubbed/Images/`)
+- Extensions: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.svg`, `.webp`, `.ico`, `.tiff`, `.tif`
+
+**Video** (`Scrubbed/Video/`)
+- Extensions: `.mp4`, `.avi`, `.mov`, `.mkv`, `.flv`, `.wmv`, `.webm`, `.m4v`, `.mpeg`, `.mpg`
+
+**Markdown Documents** (`Scrubbed/Docs/Markdown/`)
+- Extensions: `.md`, `.markdown`
+
+**Other Documents** (`Scrubbed/Docs/Other Docs/`)
+- Extensions: `.pdf`, `.doc`, `.docx`, `.txt`, `.rtf`, `.odt`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, `.csv`
+
+**Development Files** (`Scrubbed/Development/`)
+- Extensions: `.py`, `.js`, `.ts`, `.jsx`, `.tsx`, `.java`, `.c`, `.cpp`, `.h`, `.hpp`, `.rs`, `.go`, `.rb`, `.php`, `.html`, `.css`, `.scss`, `.json`, `.xml`, `.yaml`, `.yml`, `.toml`, `.sh`, `.bash`, `.sql`, `.r`, `.swift`, `.kt`
+
+**Note**: Files with unrecognized extensions or no extension are skipped and remain in their original location.
+
+#### Comparison: Dry-Run vs Regular Mode
+
+| Feature | Dry-Run Mode (`--dry`) | Regular Mode |
+|---------|------------------------|--------------|
+| **File System Changes** | None - completely safe | Files moved, directories created/removed |
+| **Output Detail** | Comprehensive preview with all planned operations | Concise summary of completed operations |
+| **Conflict Information** | Shows all conflicts and how they'd be resolved | Resolves conflicts automatically |
+| **Directory Listing** | Lists all directories to create/remove | Creates/removes without listing |
+| **Skipped Files** | Lists all skipped files with reasons | Skips silently |
+| **Potential Errors** | Detects and reports permission issues | Encounters errors during execution |
+| **Use Case** | Verify behavior before committing | Execute the actual cleanup |
+
+**Recommended Workflow:**
+1. Run `scrubb --folder --dry` first to preview changes
+2. Review the detailed output to ensure everything looks correct
+3. Run `scrubb --folder` to execute the actual cleanup
 
 ### Statistics Commands
 
@@ -153,6 +275,8 @@ scrubb/
  config.py           # Configuration management and XDG paths
  ignore.py           # File ignore pattern matching
  scrubber.py         # Core emoji removal logic and statistics
+ file_classifier.py  # File type classification for folder cleanup
+ folder_organizer.py # Folder organization and cleanup logic
 ```
 
 ## Requirements

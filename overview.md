@@ -1,12 +1,13 @@
 # **scrubb**
 
-> Emoji Scrubber CLI
+> Emoji Scrubber & Folder Organizer CLI
   Persistent cross-run stats **and** ephemeral per-run stats, packaged as a native CLI you can install and call directly as `scrubb`.
 
 ---
 
 ## Usage
 
+### Emoji Scrubbing
 ```bash
 scrubb .                 # scrub from configured default root
 scrubb src .             # scrub configured-root/src
@@ -17,6 +18,13 @@ scrubb config -p --show  # show configured default root
 scrubb config -p /code   # set default root to /code
 ```
 
+### Folder Cleanup
+```bash
+scrubb --folder --dry    # preview changes without executing (dry-run mode)
+scrubb --folder          # organize files into categorized folders
+                         # (prompts for directory path)
+```
+
 ---
 
 ## Project Layout
@@ -24,11 +32,13 @@ scrubb config -p /code   # set default root to /code
 ```text
 scrubb/
   __init__.py
-  cli.py            # Typer CLI (entrypoint)
-  config.py         # config & state locations (XDG/Windows-safe), load/save helpers
-  ignore.py         # default ignore patterns + matcher
-  scrubber.py       # core scrub logic, per-run (ephemeral) stats
-pyproject.toml      # install + console_script = scrubb
+  cli.py              # Typer CLI (entrypoint)
+  config.py           # config & state locations (XDG/Windows-safe), load/save helpers
+  ignore.py           # default ignore patterns + matcher
+  scrubber.py         # core scrub logic, per-run (ephemeral) stats
+  file_classifier.py  # file type classification for folder cleanup
+  folder_organizer.py # folder organization and cleanup logic
+pyproject.toml        # install + console_script = scrubb
 ```
 
 ---
@@ -54,7 +64,9 @@ build-backend = "setuptools.build_meta"
 
 ---
 
-## How stats work
+## How it works
+
+### Emoji Scrubbing Stats
 
 * **Ephemeral (per-run)**: Always printed after each `scrubb` execution:
 
@@ -72,6 +84,17 @@ Top entries measure how many **codepoints removed** for each emoji token (consec
 
 ---
 
+### Folder Cleanup
+
+* **Dry-Run Mode**: Preview all changes with `--dry` flag before executing (no file system modifications)
+* **File Classification**: Files are categorized by extension into Images, Video, Documents, Markdown, and Development
+* **Organization**: Files are moved to `Scrubbed/` subdirectories based on their category
+* **Conflict Resolution**: Duplicate file names get numeric suffixes (`file_1.txt`, `file_2.txt`, etc.)
+* **Cleanup**: Empty directories are automatically removed after file moves
+* **Statistics**: Displays files moved per category, empty folders removed, and any errors encountered
+
+---
+
 ## Install & Use
 
 ```bash
@@ -82,6 +105,8 @@ pip install .
 scrubb .                # scrub configured root
 scrubb src .            # scrub configured-root/src
 scrubb /path/to/dir .   # scrub explicit path
+scrubb --folder --dry   # preview folder cleanup (dry-run)
+scrubb --folder         # organize files into categories
 scrubb stats            # persistent stats
 scrubb stats --top
 scrubb config -p --show

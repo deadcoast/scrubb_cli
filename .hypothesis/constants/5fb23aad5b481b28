@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\cli.py
+# hypothesis_version: 6.148.2
+
+['\nError files:', '\nFiles by category:', '\nModified files:', '--dry', '--edit', '--reset', '--show', '--top', '-p', '=', 'allow_extra_args', 'cyan', 'default_root', 'emojis_removed', 'errors', 'files_modified', 'files_processed', 'files_skipped', 'green', 'ignore_patterns', 'red', 'runs', 'scoped_scrub', 'text_extensions', 'top_scrubs:', 'yellow']
