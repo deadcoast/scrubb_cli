@@ -7,6 +7,8 @@ from .config import load_config, save_config, load_stats, save_stats, CONFIG_PAT
 from .scrubber import Scrubber
 from .file_classifier import FileClassifier
 from .folder_organizer import FolderOrganizer, DryRunFormatter
+from .tree_visualizer import TreeVisualizer
+from .tree_renderer import TreeRenderer, SimpleTreeRenderer, RICH_AVAILABLE
 
 app = typer.Typer(
     add_completion=False, 
@@ -181,7 +183,8 @@ def config(
     help="Organize files into categorized folders and remove empty directories. Recursively scans the specified directory, categorizes files by type, and moves them to organized folders."
 )
 def folder(
-    dry: bool = typer.Option(False, "--dry", help="Preview changes without executing them")
+    dry: bool = typer.Option(False, "--dry", help="Preview changes without executing them"),
+    tree: bool = typer.Option(False, "--tree", help="Display directory tree before and after execution")
 ):
     """
     Organize files into categorized folders and remove empty directories.
@@ -196,6 +199,9 @@ def folder(
     
     # Prompt for directory path
     path_input = typer.prompt("Enter the directory path to organize")
+    
+    # Strip quotes from path input (handles both single and double quotes)
+    path_input = path_input.strip().strip('"').strip("'")
     
     # Resolve path (handle absolute, relative, and tilde expansion)
     target_path = Path(path_input).expanduser().resolve()
@@ -213,9 +219,31 @@ def folder(
     classifier = FileClassifier()
     organizer = FolderOrganizer(target_path, classifier, dry_run=dry)
     
+    # Tree visualization if enabled
+    if tree:
+        # Use SimpleTreeRenderer if rich is unavailable
+        renderer = TreeRenderer() if RICH_AVAILABLE else SimpleTreeRenderer()
+        visualizer = TreeVisualizer(target_path, renderer)
+        before_snapshot = visualizer.capture_before_state()
+        visualizer.render_before_tree(before_snapshot)
+    
     # Execute organization
     typer.echo(f"Organizing files in: {target_path}")
     stats = organizer.organize()
+    
+    # Tree visualization after execution
+    if tree:
+        if dry:
+            # Dry-run mode - simulate after state
+            after_snapshot = visualizer.simulate_after_state(stats)
+            visualizer.render_after_tree(after_snapshot, is_simulated=True)
+        else:
+            # Actual mode - capture after state
+            after_snapshot = visualizer.capture_after_state()
+            visualizer.render_after_tree(after_snapshot, is_simulated=False)
+        
+        # Display comparison
+        visualizer.display_comparison(before_snapshot, after_snapshot)
     
     # Display statistics based on mode
     if dry:

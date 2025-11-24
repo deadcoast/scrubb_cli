@@ -61,6 +61,16 @@ class DryRunStats:
 class FolderOrganizer:
     """Organizes files into categorized folders and removes empty directories."""
     
+    # Common hidden/system files that should be ignored/removed
+    IGNORED_FILES = {
+        '.DS_Store',      # macOS
+        'Thumbs.db',      # Windows
+        'desktop.ini',    # Windows
+        '.gitkeep',       # Git
+        '.gitignore',     # Git (in empty dirs)
+        '.keep',          # Generic keep file
+    }
+    
     def __init__(self, root_path: Path, classifier: FileClassifier, dry_run: bool = False):
         """
         Initialize the folder organizer.
@@ -375,11 +385,21 @@ class FolderOrganizer:
             # Check if directory is empty
             if self._is_empty_directory(dir_path):
                 try:
+                    # Remove any ignored files first
+                    for item in dir_path.iterdir():
+                        if item.is_file() and item.name in self.IGNORED_FILES:
+                            try:
+                                item.unlink()
+                            except (PermissionError, OSError):
+                                pass
+                    
+                    # Now remove the directory
                     dir_path.rmdir()
                     removed_count += 1
-                except (PermissionError, OSError):
-                    # Log warning but continue
-                    pass
+                except (PermissionError, OSError) as e:
+                    # Add to error tracking
+                    self.stats.errors += 1
+                    self.stats.error_files.append(f"Could not remove directory: {dir_path}")
         
         return removed_count
     
@@ -442,6 +462,10 @@ class FolderOrganizer:
             # Check each item
             for item in items:
                 if item.is_file():
+                    # Ignore common hidden/system files
+                    if item.name in self.IGNORED_FILES:
+                        continue
+                    
                     # If file would be moved, ignore it
                     category = self.classifier.classify(item)
                     if category != FileCategory.UNKNOWN and item in files_to_move:
@@ -453,7 +477,7 @@ class FolderOrganizer:
                     if not self._would_be_empty_after_moves(item, files_to_move):
                         return False
             
-            # All items would be moved or are empty subdirectories
+            # All items would be moved, are empty subdirectories, or are ignored files
             return True
             
         except (PermissionError, OSError):
@@ -488,13 +512,13 @@ class FolderOrganizer:
     
     def _is_empty_directory(self, dir_path: Path) -> bool:
         """
-        Check if directory is empty or contains only empty subdirs.
+        Check if directory is empty or contains only empty subdirs and ignored files.
         
         Args:
             dir_path: Directory to check
             
         Returns:
-            True if empty or contains only empty subdirectories
+            True if empty or contains only empty subdirectories and ignored files
         """
         try:
             # Check if directory has any items
@@ -504,14 +528,18 @@ class FolderOrganizer:
             if not items:
                 return True
             
-            # If it has items, check if they're all empty directories
+            # If it has items, check if they're all empty directories or ignored files
             for item in items:
                 if item.is_file():
+                    # Ignore common hidden/system files
+                    if item.name in self.IGNORED_FILES:
+                        continue
+                    # Found a real file, directory is not empty
                     return False
                 if item.is_dir() and not self._is_empty_directory(item):
                     return False
             
-            # All items are empty directories
+            # All items are either empty directories or ignored files
             return True
             
         except (PermissionError, OSError):

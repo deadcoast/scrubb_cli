@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\tree_comparator.py
+# hypothesis_version: 6.148.2
+
+[100, '\nCategory Changes:', '+', '=', '\\[/?[^\\]]+\\]', 'bold', 'bold cyan', 'dim', 'green', 'red']

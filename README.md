@@ -16,9 +16,10 @@
 
 ### Folder Cleanup
 - **Automatic File Categorization**: Organizes files by type (Images, Video, Documents, Development)
+- **Tree Visualization**: Visual before/after directory trees with comprehensive statistics using `--tree` flag
 - **Dry-Run Mode**: Preview all changes before executing with `--dry` flag
 - **Smart Conflict Resolution**: Handles duplicate file names with incremental numbering
-- **Empty Folder Removal**: Automatically cleans up empty directories after organization
+- **Empty Folder Removal**: Automatically cleans up empty directories after organization (including removal of hidden system files like `.DS_Store`, `Thumbs.db`)
 - **Recursive Processing**: Scans and organizes files at all directory depths
 - **Detailed Statistics**: Reports files moved, categories used, and folders removed
 
@@ -94,12 +95,20 @@ scrubb config -p /path/to/code --edit
 ### Folder Cleanup
 ```bash
 # Preview changes without executing (dry-run mode)
-scrubb --folder --dry
+scrubb folder --dry
 # (You'll be prompted to enter the directory path)
 
 # Organize files in a directory (actual execution)
-scrubb --folder
+scrubb folder
 # (You'll be prompted to enter the directory path)
+
+# Organize with visual tree display (recommended)
+scrubb folder --tree
+# Shows before/after directory trees with statistics
+
+# Preview with tree visualization (best for first-time use)
+scrubb folder --tree --dry
+# Shows current and simulated trees without making changes
 
 # Files will be organized into:
 # - Scrubbed/Images/
@@ -144,10 +153,16 @@ scrubb config -p /path/to/code --edit
 
 ```bash
 # Preview mode (recommended first)
-scrubb --folder --dry
+scrubb folder --dry
 
 # Actual execution
-scrubb --folder
+scrubb folder
+
+# With tree visualization (recommended)
+scrubb folder --tree
+
+# Preview with tree visualization
+scrubb folder --tree --dry
 ```
 
 #### Dry-Run Mode (Preview)
@@ -155,7 +170,7 @@ scrubb --folder
 Before making any changes, use dry-run mode to preview what will happen:
 
 ```bash
-scrubb --folder --dry
+scrubb folder --dry
 ```
 
 **Dry-run mode provides:**
@@ -228,9 +243,98 @@ The folder cleanup feature organizes files into these categories:
 | **Use Case** | Verify behavior before committing | Execute the actual cleanup |
 
 **Recommended Workflow:**
-1. Run `scrubb --folder --dry` first to preview changes
-2. Review the detailed output to ensure everything looks correct
-3. Run `scrubb --folder` to execute the actual cleanup
+1. Run `scrubb folder --tree --dry` first to preview changes with visual trees
+2. Review the detailed output and tree visualization to ensure everything looks correct
+3. Run `scrubb folder --tree` to execute the actual cleanup with visual confirmation
+
+#### Tree Visualization
+
+The `--tree` flag adds professional directory tree visualization to the folder cleanup command, making it easy to see structural changes before and after file organization.
+
+**Example Output:**
+
+```
+═══════════════════════════════════════════════════════════════
+BEFORE - Directory Structure
+═══════════════════════════════════════════════════════════════
+/path/to/directory
+├── photo.jpg
+├── video.mp4
+├── notes.md
+├── report.pdf
+├── script.py
+└── nested/
+    └── file.txt
+
+📊 Statistics:
+  Files: 6
+  Directories: 2
+  Total Size: 2.4 MB
+  Max Depth: 2
+  
+  Files by Category:
+    Images: 1
+    Video: 1
+    Docs/Markdown: 1
+    Docs/Other Docs: 2
+    Development: 1
+
+═══════════════════════════════════════════════════════════════
+AFTER - Directory Structure
+═══════════════════════════════════════════════════════════════
+/path/to/directory
+└── Scrubbed/
+    ├── Images/
+    │   └── photo.jpg
+    ├── Video/
+    │   └── video.mp4
+    ├── Docs/
+    │   ├── Markdown/
+    │   │   └── notes.md
+    │   └── Other Docs/
+    │       ├── report.pdf
+    │       └── file.txt
+    └── Development/
+        └── script.py
+
+📊 Statistics:
+  Files: 6
+  Directories: 8
+  Total Size: 2.4 MB
+  Max Depth: 4
+
+═══════════════════════════════════════════════════════════════
+COMPARISON - Changes
+═══════════════════════════════════════════════════════════════
+  Files: 0 (no change)
+  Directories: +6
+  Total Size: 0 B (no change)
+  Max Depth: +2
+```
+
+**Features:**
+- **Visual Clarity**: See exact directory structure before and after organization
+- **Comprehensive Statistics**: File counts, directory counts, total size, max depth, and category breakdowns
+- **Change Tracking**: Clear comparison showing what changed (files moved, directories created/removed)
+- **Color Coding**: Files color-coded by type for easy identification
+- **Professional Formatting**: Uses box-drawing characters for clean, readable trees
+- **Dry-Run Support**: Simulates after-state when used with `--dry` flag
+
+**Usage:**
+```bash
+# Actual execution with tree visualization
+scrubb folder --tree
+
+# Preview with tree visualization (no changes made)
+scrubb folder --tree --dry
+```
+
+**Benefits:**
+- Verify file organization before committing changes
+- Understand structural impact at a glance
+- Debug categorization issues visually
+- Document before/after states for record-keeping
+- Confidence in cleanup operations
 
 ### Statistics Commands
 
@@ -304,13 +408,41 @@ Persistent stats include:
 
 ```
 scrubb/
- __init__.py          # Package initialization
- cli.py              # Typer CLI entrypoint and commands
- config.py           # Configuration management and XDG paths
- ignore.py           # File ignore pattern matching
- scrubber.py         # Core emoji removal logic and statistics
- file_classifier.py  # File type classification for folder cleanup
- folder_organizer.py # Folder organization and cleanup logic
+├── .archive/                    # Historical design documents
+├── .kiro/                       # Kiro specs and planning documents
+│   └── specs/                   # Feature specifications
+├── docs/                        # User documentation
+│   ├── ARCHITECTURE.md          # System design and architecture
+│   ├── COMMAND_REFERENCE.md     # Complete command-line reference
+│   └── dev/                     # Developer documentation
+│       ├── CONTRIBUTING.md      # Contribution guidelines
+│       ├── DOCUMENTATION_VALIDATION_PLAN.md
+│       ├── EMPTY_FOLDER_FIX.md
+│       └── FIXES_SUMMARY.md
+├── examples/                    # Example scripts and demos
+│   └── demo_empty_folder_fix.py
+├── scripts/                     # Utility scripts
+│   ├── update_links.py
+│   ├── validate_docs.py
+│   └── verify_links.py
+├── scrubb/                      # Main package
+│   ├── __init__.py              # Package initialization
+│   ├── cli.py                   # Typer CLI entrypoint and commands
+│   ├── config.py                # Configuration management and XDG paths
+│   ├── directory_scanner.py    # Directory scanning functionality
+│   ├── file_classifier.py      # File type classification for folder cleanup
+│   ├── folder_organizer.py     # Folder organization and cleanup logic
+│   ├── ignore.py                # File ignore pattern matching
+│   ├── scrubber.py              # Core emoji removal logic and statistics
+│   ├── statistics_calculator.py # Statistics calculation
+│   ├── tree_comparator.py      # Tree comparison functionality
+│   ├── tree_models.py           # Tree data models
+│   ├── tree_renderer.py        # Tree rendering
+│   └── tree_visualizer.py      # Tree visualization
+├── tests/                       # Test suite
+├── CHANGELOG.md                 # Version history and changes
+├── pyproject.toml               # Project configuration and dependencies
+└── README.md                    # This file
 ```
 
 ## Requirements
@@ -377,6 +509,24 @@ The tool detects and removes emojis from these Unicode ranges:
 - Supplemental Symbols (U+1F900-U+1F9FF)
 - Miscellaneous Symbols (U+2600-U+26FF)
 - Skin Tones & Modifiers (U+1F3FB-U+1F3FF)
+
+
+## Documentation
+
+Comprehensive documentation is available to help you use and contribute to scrubb:
+
+### User Documentation
+- **[Command Reference](docs/COMMAND_REFERENCE.md)** - Complete command-line reference with all available commands and options
+- **[Architecture](docs/ARCHITECTURE.md)** - System design, component overview, and architectural decisions
+
+### Developer Documentation
+- **[Contributing Guidelines](docs/dev/CONTRIBUTING.md)** - How to contribute to the project, coding standards, and development workflow
+- **[Documentation Validation Plan](docs/dev/DOCUMENTATION_VALIDATION_PLAN.md)** - Documentation testing and validation procedures
+- **[Empty Folder Fix](docs/dev/EMPTY_FOLDER_FIX.md)** - Technical details on empty folder handling
+- **[Fixes Summary](docs/dev/FIXES_SUMMARY.md)** - Summary of bug fixes and improvements
+
+### Project Information
+- **[Changelog](CHANGELOG.md)** - Version history and release notes
 
 ## License
 

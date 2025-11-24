@@ -376,3 +376,62 @@ def test_dry_run_shows_all_sections():
             
             # Check that potential errors section is present (even if no errors)
             assert "POTENTIAL ERRORS" in result.stdout or "No potential errors detected" in result.stdout
+
+
+def test_folder_command_tree_flag_recognized():
+    """
+    Test that --tree flag is recognized and doesn't cause errors.
+    Requirements: 1.1, 1.5
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create test files
+        (root / "test1.txt").touch()
+        (root / "test2.jpg").touch()
+        
+        # Mock the prompt to return our test directory
+        with patch('typer.prompt', return_value=str(root)):
+            result = runner.invoke(app, ['folder', '--tree'])
+            
+            # Check command succeeded
+            assert result.exit_code == 0
+            
+            # Check that tree visualization sections are present
+            assert "BEFORE" in result.stdout or "AFTER" in result.stdout
+            
+            # Check that standard output is still present
+            assert "Organizing files in:" in result.stdout
+            assert "Folder cleanup complete!" in result.stdout
+
+
+def test_folder_command_tree_and_dry_flags_together():
+    """
+    Test that --tree and --dry flags work together.
+    Requirements: 1.2, 7.1, 7.5
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create test files
+        (root / "test1.txt").touch()
+        (root / "test2.jpg").touch()
+        
+        # Mock the prompt to return our test directory
+        with patch('typer.prompt', return_value=str(root)):
+            result = runner.invoke(app, ['folder', '--tree', '--dry'])
+            
+            # Check command succeeded
+            assert result.exit_code == 0
+            
+            # Check that dry-run mode header is displayed
+            assert "DRY RUN MODE" in result.stdout
+            
+            # Check that tree visualization is present
+            assert "BEFORE" in result.stdout or "AFTER" in result.stdout
+            
+            # Check that simulation indicator is present
+            assert "Simulated" in result.stdout or "SIMULATED" in result.stdout or "DRY RUN" in result.stdout
+            
+            # Check that standard dry-run output is still present
+            assert "DRY RUN PREVIEW" in result.stdout
