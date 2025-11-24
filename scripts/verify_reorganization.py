@@ -34,7 +34,7 @@ class ReorganizationVerifier:
     
     def verify_directory_structure(self):
         """Verify all new directories exist (Requirement 1)."""
-        print("📁 Verifying directory structure...")
+        print(" Verifying directory structure...")
         
         required_dirs = [
             "docs",
@@ -51,15 +51,15 @@ class ReorganizationVerifier:
         for dir_path in required_dirs:
             full_path = self.root / dir_path
             if full_path.exists() and full_path.is_dir():
-                self.successes.append(f"✓ Directory exists: {dir_path}")
+                self.successes.append(f" Directory exists: {dir_path}")
             else:
-                self.errors.append(f"✗ Missing directory: {dir_path}")
+                self.errors.append(f" Missing directory: {dir_path}")
         
         print()
     
     def verify_file_locations(self):
         """Verify all files are in correct locations (Requirements 2, 3, 7, 8)."""
-        print("📄 Verifying file locations...")
+        print(" Verifying file locations...")
         
         expected_files = {
             # Documentation files (Requirement 2)
@@ -86,24 +86,24 @@ class ReorganizationVerifier:
         for file_path, description in expected_files.items():
             full_path = self.root / file_path
             if full_path.exists() and full_path.is_file():
-                self.successes.append(f"✓ File exists: {file_path} ({description})")
+                self.successes.append(f" File exists: {file_path} ({description})")
             else:
-                self.errors.append(f"✗ Missing file: {file_path} ({description})")
+                self.errors.append(f" Missing file: {file_path} ({description})")
         
         # Verify deleted files (Requirement 4)
         deleted_files = [".paths.md"]
         for file_path in deleted_files:
             full_path = self.root / file_path
             if not full_path.exists():
-                self.successes.append(f"✓ File correctly deleted: {file_path}")
+                self.successes.append(f" File correctly deleted: {file_path}")
             else:
-                self.warnings.append(f"⚠ File should be deleted: {file_path}")
+                self.warnings.append(f" File should be deleted: {file_path}")
         
         print()
     
     def verify_documentation_links(self):
         """Verify no broken links in documentation (Requirement 5)."""
-        print("🔗 Verifying documentation links...")
+        print(" Verifying documentation links...")
         
         doc_files = []
         
@@ -140,16 +140,16 @@ class ReorganizationVerifier:
                             'resolved': link_path.relative_to(self.root) if link_path.is_relative_to(self.root) else link_path
                         })
             except Exception as e:
-                self.warnings.append(f"⚠ Could not read {doc_file.relative_to(self.root)}: {e}")
+                self.warnings.append(f" Could not read {doc_file.relative_to(self.root)}: {e}")
         
         if broken_links:
             for link in broken_links:
                 self.errors.append(
-                    f"✗ Broken link in {link['file']}: "
+                    f" Broken link in {link['file']}: "
                     f"[{link['link_text']}]({link['link_url']}) -> {link['resolved']}"
                 )
         else:
-            self.successes.append(f"✓ All {total_links} documentation links are valid")
+            self.successes.append(f" All {total_links} documentation links are valid")
         
         print()
     
@@ -162,30 +162,30 @@ class ReorganizationVerifier:
     
     def verify_core_preservation(self):
         """Verify core code is preserved (Requirement 6)."""
-        print("🔒 Verifying core code preservation...")
+        print(" Verifying core code preservation...")
         
         # Check that scrubb/ directory has files
         scrubb_files = list((self.root / "scrubb").glob("*.py"))
         if len(scrubb_files) > 0:
-            self.successes.append(f"✓ Core source code preserved ({len(scrubb_files)} files in scrubb/)")
+            self.successes.append(f" Core source code preserved ({len(scrubb_files)} files in scrubb/)")
         else:
-            self.errors.append("✗ No Python files found in scrubb/ directory")
+            self.errors.append(" No Python files found in scrubb/ directory")
         
         # Check that tests/ directory has files
         test_files = list((self.root / "tests").glob("test_*.py"))
         if len(test_files) > 0:
-            self.successes.append(f"✓ Test code preserved ({len(test_files)} test files)")
+            self.successes.append(f" Test code preserved ({len(test_files)} test files)")
         else:
-            self.errors.append("✗ No test files found in tests/ directory")
+            self.errors.append(" No test files found in tests/ directory")
         
         # Check critical files unchanged
         critical_files = ["pyproject.toml", ".gitignore"]
         for file_name in critical_files:
             file_path = self.root / file_name
             if file_path.exists():
-                self.successes.append(f"✓ Critical file preserved: {file_name}")
+                self.successes.append(f" Critical file preserved: {file_name}")
             else:
-                self.errors.append(f"✗ Critical file missing: {file_name}")
+                self.errors.append(f" Critical file missing: {file_name}")
         
         print()
     
@@ -197,19 +197,19 @@ class ReorganizationVerifier:
         print()
         
         if self.successes:
-            print(f"✅ SUCCESSES ({len(self.successes)}):")
+            print(f" SUCCESSES ({len(self.successes)}):")
             for success in self.successes:
                 print(f"  {success}")
             print()
         
         if self.warnings:
-            print(f"⚠️  WARNINGS ({len(self.warnings)}):")
+            print(f"  WARNINGS ({len(self.warnings)}):")
             for warning in self.warnings:
                 print(f"  {warning}")
             print()
         
         if self.errors:
-            print(f"❌ ERRORS ({len(self.errors)}):")
+            print(f" ERRORS ({len(self.errors)}):")
             for error in self.errors:
                 print(f"  {error}")
             print()
@@ -217,15 +217,15 @@ class ReorganizationVerifier:
         print("=" * 70)
         
         if self.errors:
-            print("❌ VERIFICATION FAILED")
+            print(" VERIFICATION FAILED")
             print(f"   {len(self.errors)} error(s) found")
             return False
         elif self.warnings:
-            print("⚠️  VERIFICATION PASSED WITH WARNINGS")
+            print("  VERIFICATION PASSED WITH WARNINGS")
             print(f"   {len(self.warnings)} warning(s) found")
             return True
         else:
-            print("✅ VERIFICATION PASSED")
+            print(" VERIFICATION PASSED")
             print("   All checks successful!")
             return True
 

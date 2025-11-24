@@ -140,36 +140,36 @@ def update_readme_structure(readme_path: Path) -> None:
 
 ```
 scrubb/
-├── docs/                    # Documentation
-│   ├── COMMAND_REFERENCE.md
-│   ├── ARCHITECTURE.md
-│   └── dev/                # Developer documentation
-│       ├── CONTRIBUTING.md
-│       ├── DOCUMENTATION_VALIDATION_PLAN.md
-│       ├── EMPTY_FOLDER_FIX.md
-│       └── FIXES_SUMMARY.md
-├── examples/               # Example scripts and demos
-│   └── demo_empty_folder_fix.py
-├── scripts/                # Utility scripts
-│   └── validate_docs.py
-├── scrubb/                 # Main package
-│   ├── __init__.py
-│   ├── cli.py
-│   ├── config.py
-│   ├── directory_scanner.py
-│   ├── file_classifier.py
-│   ├── folder_organizer.py
-│   ├── ignore.py
-│   ├── scrubber.py
-│   ├── statistics_calculator.py
-│   ├── tree_comparator.py
-│   ├── tree_models.py
-│   ├── tree_renderer.py
-│   └── tree_visualizer.py
-├── tests/                  # Test suite
-├── .kiro/                  # Kiro specs and configuration
-├── pyproject.toml          # Project configuration
-└── README.md               # This file
+ docs/                    # Documentation
+    COMMAND_REFERENCE.md
+    ARCHITECTURE.md
+    dev/                # Developer documentation
+        CONTRIBUTING.md
+        DOCUMENTATION_VALIDATION_PLAN.md
+        EMPTY_FOLDER_FIX.md
+        FIXES_SUMMARY.md
+ examples/               # Example scripts and demos
+    demo_empty_folder_fix.py
+ scripts/                # Utility scripts
+    validate_docs.py
+ scrubb/                 # Main package
+    __init__.py
+    cli.py
+    config.py
+    directory_scanner.py
+    file_classifier.py
+    folder_organizer.py
+    ignore.py
+    scrubber.py
+    statistics_calculator.py
+    tree_comparator.py
+    tree_models.py
+    tree_renderer.py
+    tree_visualizer.py
+ tests/                  # Test suite
+ .kiro/                  # Kiro specs and configuration
+ pyproject.toml          # Project configuration
+ README.md               # This file
 ```
 
 """
@@ -203,7 +203,7 @@ def main():
         
         # Add structure sections
         update_readme_structure(readme_path)
-        print(f"  ✓ Updated {readme_path}")
+        print(f"   Updated {readme_path}")
     
     # Update docs/COMMAND_REFERENCE.md
     command_ref_path = root_path / 'docs' / 'COMMAND_REFERENCE.md'
@@ -212,7 +212,7 @@ def main():
         content = command_ref_path.read_text(encoding='utf-8')
         updated_content = update_links_in_content(content, link_mapping, command_ref_path.parent)
         command_ref_path.write_text(updated_content, encoding='utf-8')
-        print(f"  ✓ Updated {command_ref_path}")
+        print(f"   Updated {command_ref_path}")
     
     # Update docs/dev/ files
     docs_dev_path = root_path / 'docs' / 'dev'
@@ -222,7 +222,7 @@ def main():
             content = doc_file.read_text(encoding='utf-8')
             updated_content = update_links_in_content(content, link_mapping, doc_file.parent)
             doc_file.write_text(updated_content, encoding='utf-8')
-            print(f"  ✓ Updated {doc_file}")
+            print(f"   Updated {doc_file}")
     
     # Verify all links
     print("\n" + "="*70)
@@ -255,13 +255,13 @@ def main():
                 exists = full_path.exists()
             
             if not exists:
-                print(f"  ✗ Broken link in {doc_file}: [{link_text}]({link_target})")
+                print(f"   Broken link in {doc_file}: [{link_text}]({link_target})")
                 all_valid = False
     
     if all_valid:
-        print("  ✓ All links are valid!")
+        print("   All links are valid!")
     else:
-        print("\n⚠ Some links are broken. Please review and fix manually.")
+        print("\n Some links are broken. Please review and fix manually.")
     
     print("\n" + "="*70)
     print("Link update complete!")

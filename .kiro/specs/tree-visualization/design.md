@@ -11,22 +11,22 @@ The design integrates seamlessly with the existing CLI architecture, reusing the
 ### High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         CLI Layer                            │
-│                      (cli.py: folder)                        │
-└───────────────┬─────────────────────────────────────────────┘
-                │
-                ├──> TreeVisualizer (new)
-                │    ├─> DirectoryScanner
-                │    ├─> TreeRenderer (rich library)
-                │    └─> StatisticsCalculator
-                │
-                ├──> FolderOrganizer (existing)
-                │    ├─> FileClassifier (existing)
-                │    └─> DryRunFormatter (existing)
-                │
-                └──> TreeComparator (new)
-                     └─> DeltaCalculator
+
+                         CLI Layer                            
+                      (cli.py: folder)                        
+
+                
+                > TreeVisualizer (new)
+                    > DirectoryScanner
+                    > TreeRenderer (rich library)
+                    > StatisticsCalculator
+                
+                > FolderOrganizer (existing)
+                    > FileClassifier (existing)
+                    > DryRunFormatter (existing)
+                
+                > TreeComparator (new)
+                     > DeltaCalculator
 ```
 
 ### Component Interaction Flow
@@ -462,7 +462,7 @@ def folder(
     
     # Display dry-run mode header if enabled
     if dry:
-        typer.secho("\n🔍 DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
+        typer.secho("\n DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
     
     # Prompt for directory path
     path_input = typer.prompt("Enter the directory path to organize")

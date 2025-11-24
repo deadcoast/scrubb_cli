@@ -81,12 +81,12 @@ class StatisticsCalculator:
             traverse(root_node)
         except Exception as e:
             logger.error(f"Statistics calculation failed: {e}", exc_info=True)
-            print(f"\n⚠️  Warning: Statistics calculation encountered errors.")
+            print(f"\n  Warning: Statistics calculation encountered errors.")
             print(f"Partial statistics will be displayed.\n")
         
         if error_count > 0:
             logger.warning(f"Statistics calculation completed with {error_count} errors")
-            print(f"\n⚠️  Warning: {error_count} errors occurred during statistics calculation.")
+            print(f"\n  Warning: {error_count} errors occurred during statistics calculation.")
             print(f"Statistics may be incomplete.\n")
         
         return stats
@@ -131,7 +131,7 @@ class StatisticsCalculator:
             )
         except Exception as e:
             logger.error(f"Delta calculation failed: {e}", exc_info=True)
-            print(f"\n⚠️  Warning: Failed to calculate statistics delta: {e}")
+            print(f"\n  Warning: Failed to calculate statistics delta: {e}")
             print(f"Returning zero deltas.\n")
             # Return zero deltas as fallback
             return StatisticsDelta(

@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\output_formatter.py
+# hypothesis_version: 6.148.2
+
+[' Error', '.', 'Metric', 'Statistics', 'Value', '[+]', '[-]', '[X]', '[]', '[•]', '[→]', '_', 'blue', 'bold cyan', 'color', 'cyan', 'error', 'green', 'icon', 'magenta', 'modified', 'moved', 'red', 'skipped', 'success', 'white', 'yellow']

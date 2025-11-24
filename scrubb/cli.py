@@ -9,6 +9,8 @@ from .file_classifier import FileClassifier
 from .folder_organizer import FolderOrganizer, DryRunFormatter
 from .tree_visualizer import TreeVisualizer
 from .tree_renderer import TreeRenderer, SimpleTreeRenderer, RICH_AVAILABLE
+from .verbosity import VerbosityManager, VerbosityLevel
+from .prompt_utils import PromptUtils
 
 app = typer.Typer(
     add_completion=False, 
@@ -33,13 +35,16 @@ def _resolve_target(arg_path: str | None, executor: str | None, default_root: Pa
     return (default_root / arg_path).resolve()
 
 @app.command(
+    name="emoji",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
     help="Scrub emojis from text files and directories. Removes emojis from text files while preserving structure. Processes files recursively and provides detailed statistics about the operation."
 )
-def main(
+def emoji(
     ctx: typer.Context,
     path: str = typer.Argument(None, help="Target path (optional) - defaults to configured root directory"),
     executor: str = typer.Argument(None, help="Must be '.' to indicate recursive processing of all files"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Display detailed debug information including file-by-file processing"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-essential output, only show errors"),
 ):
     """
     Scrub emojis from text files and directories.
@@ -47,6 +52,29 @@ def main(
     Removes emojis from text files while preserving structure. Processes files recursively
     and provides detailed statistics about the operation.
     """
+    # Set up verbosity manager
+    if verbose and quiet:
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            "Cannot use both --verbose and --quiet flags",
+            suggestion="Choose either --verbose for detailed output or --quiet for minimal output"
+        )
+        raise typer.Exit(code=2)
+    
+    if verbose:
+        verbosity_level = VerbosityLevel.VERBOSE
+    elif quiet:
+        verbosity_level = VerbosityLevel.QUIET
+    else:
+        verbosity_level = VerbosityLevel.NORMAL
+    
+    verbosity_manager = VerbosityManager(verbosity_level)
+    VerbosityManager.set_current(verbosity_manager)
+    
     cfg = load_config()
     target = _resolve_target(path, executor, Path(cfg["default_root"]).resolve())
 
@@ -58,36 +86,68 @@ def main(
         scrubber.scrub_file(target)
     else:
         if not target.exists():
-            typer.echo(f"Path not found: {target}", err=True)
+            from .output_formatter import OutputFormatter
+            from rich.console import Console
+            
+            console = Console(stderr=True)
+            formatter = OutputFormatter(console)
+            formatter.print_error(
+                f"Path not found: {target}",
+                suggestion="Check that the path is correct and accessible"
+            )
             raise typer.Exit(code=2)
         scrubber.scrub_dir(target)
 
-    # ----- Ephemeral per-run output (ALWAYS printed at end of run) -----
+    # ----- Ephemeral per-run output (controlled by verbosity) -----
     rs = scrubber.run
-    typer.secho(
-        f"scrubb run: files_processed={rs.files_processed} modified={rs.files_modified} "
-        f"skipped={rs.files_skipped} errors={rs.errors} emojis_removed={rs.emojis_removed}",
-        bold=True,
-    )
     
-    # Show detailed file information
-    if rs.modified_files:
-        typer.secho("\nModified files:", fg="green", bold=True)
-        for file_path in rs.modified_files:
-            typer.echo(f"  [+] {file_path}")
+    # Summary output (shown in NORMAL and VERBOSE modes)
+    if verbosity_manager.should_print_summary():
+        typer.secho(
+            f"scrubb run: files_processed={rs.files_processed} modified={rs.files_modified} "
+            f"skipped={rs.files_skipped} errors={rs.errors} emojis_removed={rs.emojis_removed}",
+            bold=True,
+        )
     
+    # Detailed file information (shown in VERBOSE mode)
+    if verbosity_manager.should_print_debug():
+        if rs.modified_files:
+            typer.secho("\nModified files:", fg="green", bold=True)
+            for file_path in rs.modified_files:
+                typer.echo(f"  [+] {file_path}")
+    
+    # Error files (always shown - errors are always displayed)
     if rs.error_files:
-        typer.secho("\nError files:", fg="red", bold=True)
-        for file_path in rs.error_files:
-            typer.echo(f"  [X] {file_path}")
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console()
+        formatter = OutputFormatter(console)
+        formatter.print_file_list(rs.error_files, status="error", title="Error files")
     
-    if rs.scoped_scrub:
+    # Emoji tokens removed (shown in NORMAL and VERBOSE modes)
+    if verbosity_manager.should_print_info() and rs.scoped_scrub:
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console()
+        formatter = OutputFormatter(console)
+        
         typer.secho("\nEmoji tokens removed:", fg="yellow", bold=True)
         # Show top 5 emoji tokens for this run
         items = sorted(rs.scoped_scrub.items(), key=lambda kv: kv[1], reverse=True)[:5]
         for i, (emoji_token, count) in enumerate(items, 1):
-            # Show emoji count with index to avoid Unicode display issues on Windows
-            typer.echo(f"  #{i}: {count} codepoints")
+            # Use formatter to display emoji with character and codepoint
+            display = formatter.format_emoji_display(emoji_token, count)
+            typer.echo(f"  #{i}: {display}")
+        
+        # In verbose mode, show detailed information with file paths
+        if verbosity_manager.should_print_debug() and rs.modified_files:
+            typer.secho("\nDetailed emoji removal information:", fg="cyan", bold=True)
+            # For verbose mode, we'd need to track which emojis came from which files
+            # For now, just show the files that were modified
+            for file_path in rs.modified_files[:10]:  # Limit to first 10 files
+                typer.echo(f"  Modified: {file_path}")
 
     # ----- Persist into global stats -----
     gs = load_stats()
@@ -111,6 +171,7 @@ def main(
 def stats(
     top: bool = typer.Option(False, "--top", help="Show top 5 most frequently removed emoji tokens"),
     reset: bool = typer.Option(False, "--reset", help="Reset ALL persistent statistics to zero"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompts and proceed automatically"),
 ):
     """
     View persistent statistics accumulated across all scrubbing runs.
@@ -118,6 +179,17 @@ def stats(
     Displays comprehensive statistics maintained across all scrubbing operations.
     """
     if reset:
+        # Confirmation prompt for destructive operation (unless --yes is provided)
+        if not yes:
+            try:
+                confirm = PromptUtils.prompt_confirmation("Are you sure you want to reset all statistics?", default=False)
+                if not confirm:
+                    typer.echo("Operation cancelled.")
+                    raise typer.Exit(code=130)
+            except KeyboardInterrupt:
+                typer.echo("\nOperation cancelled.")
+                raise typer.Exit(code=130)
+        
         from .config import DEFAULT_STATS
         save_stats(DEFAULT_STATS.copy())
         typer.echo("Persistent stats reset.")
@@ -132,12 +204,55 @@ def stats(
     typer.echo(f"emojis_removed:  {gs['emojis_removed']}")
 
     if top and gs.get("scoped_scrub"):
-        # Show top 5 tokens by count (count is measured in removed codepoints length)
-        items = sorted(gs["scoped_scrub"].items(), key=lambda kv: kv[1], reverse=True)[:5]
-        if items:
-            typer.echo("top_scrubs:")
-            for emoji_token, count in items:
-                typer.echo(f"  {emoji_token}  -> {count}")
+        # Show top 5 tokens by count using rich formatted table
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console()
+        formatter = OutputFormatter(console)
+        
+        # Create and display emoji statistics table
+        table = formatter.create_emoji_stats_table(gs["scoped_scrub"], top_n=5)
+        console.print("\n")
+        console.print(table)
+
+@app.command(
+    name="main",
+    hidden=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def main(
+    ctx: typer.Context,
+    path: str = typer.Argument(None, help="Target path (optional) - defaults to configured root directory"),
+    executor: str = typer.Argument(None, help="Must be '.' to indicate recursive processing of all files"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Display detailed debug information including file-by-file processing"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-essential output, only show errors"),
+):
+    """
+    Deprecated: Use 'scrubb emoji' instead.
+    
+    This command is deprecated and will be removed in a future version.
+    """
+    # Display deprecation warning to stderr
+    typer.secho(
+        "\n  WARNING: The 'main' command is deprecated and will be removed in a future version.",
+        fg=typer.colors.YELLOW,
+        bold=True,
+        err=True
+    )
+    typer.secho(
+        "   Please use 'scrubb emoji' instead.",
+        fg=typer.colors.YELLOW,
+        err=True
+    )
+    typer.secho(
+        "   See documentation for migration guide.\n",
+        fg=typer.colors.YELLOW,
+        err=True
+    )
+    
+    # Redirect to emoji command with the same arguments
+    ctx.invoke(emoji, ctx=ctx, path=path, executor=executor, verbose=verbose, quiet=quiet)
 
 @app.command(
     help="Manage scrubb configuration settings and view current configuration. View and modify scrubb's configuration settings, including the default root directory."
@@ -171,20 +286,96 @@ def config(
         save_config(cfg)
         typer.echo(f"default_root updated -> {new_root}")
     elif p and not edit:
-        typer.echo("Error: Use --edit flag to update the default root path", err=True)
-        typer.echo("Example: scrubb config -p /path/to/code --edit")
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            "Use --edit flag to update the default root path",
+            suggestion="Example: scrubb config -p /path/to/code --edit"
+        )
         raise typer.Exit(code=1)
     elif edit and not p:
-        typer.echo("Error: Provide a path with -p when using --edit", err=True)
-        typer.echo("Example: scrubb config -p /path/to/code --edit")
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            "Provide a path with -p when using --edit",
+            suggestion="Example: scrubb config -p /path/to/code --edit"
+        )
         raise typer.Exit(code=1)
+
+# ===== Command Aliases =====
+# Hidden aliases for convenience - these invoke the main commands
+
+@app.command(
+    name="e",
+    hidden=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def e_alias(
+    ctx: typer.Context,
+    path: str = typer.Argument(None, help="Target path (optional) - defaults to configured root directory"),
+    executor: str = typer.Argument(None, help="Must be '.' to indicate recursive processing of all files"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Display detailed debug information including file-by-file processing"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-essential output, only show errors"),
+):
+    """Alias for 'emoji' command."""
+    ctx.invoke(emoji, ctx=ctx, path=path, executor=executor, verbose=verbose, quiet=quiet)
+
+@app.command(
+    name="f",
+    hidden=True,
+)
+def f_alias(
+    dry: bool = typer.Option(False, "--dry", help="Preview changes without executing them"),
+    tree: bool = typer.Option(False, "--tree", help="Display directory tree before and after execution"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Display detailed debug information including file-by-file processing"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-essential output, only show errors"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompts and proceed automatically"),
+):
+    """Alias for 'folder' command."""
+    # Directly call the folder function with the same arguments
+    folder(dry=dry, tree=tree, verbose=verbose, quiet=quiet, yes=yes)
+
+@app.command(
+    name="s",
+    hidden=True,
+)
+def s_alias(
+    top: bool = typer.Option(False, "--top", help="Show top 5 most frequently removed emoji tokens"),
+    reset: bool = typer.Option(False, "--reset", help="Reset ALL persistent statistics to zero"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompts and proceed automatically"),
+):
+    """Alias for 'stats' command."""
+    # Directly call the stats function with the same arguments
+    stats(top=top, reset=reset, yes=yes)
+
+@app.command(
+    name="c",
+    hidden=True,
+)
+def c_alias(
+    p: str = typer.Option(None, "-p", help="Path to set as new default root directory"),
+    show: bool = typer.Option(False, "--show", help="Show current configuration (default behavior)"),
+    edit: bool = typer.Option(False, "--edit", help="Apply the provided path (-p) as new default root"),
+):
+    """Alias for 'config' command."""
+    # Directly call the config function with the same arguments
+    config(p=p, show=show, edit=edit)
 
 @app.command(
     help="Organize files into categorized folders and remove empty directories. Recursively scans the specified directory, categorizes files by type, and moves them to organized folders."
 )
 def folder(
     dry: bool = typer.Option(False, "--dry", help="Preview changes without executing them"),
-    tree: bool = typer.Option(False, "--tree", help="Display directory tree before and after execution")
+    tree: bool = typer.Option(False, "--tree", help="Display directory tree before and after execution"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Display detailed debug information including file-by-file processing"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress all non-essential output, only show errors"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompts and proceed automatically"),
 ):
     """
     Organize files into categorized folders and remove empty directories.
@@ -193,9 +384,32 @@ def folder(
     Documents, Development), and moves them to organized folders within a 'Scrubbed' directory.
     Empty directories are removed after file organization.
     """
-    # Display dry-run mode header if enabled
-    if dry:
-        typer.secho("\n🔍 DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
+    # Set up verbosity manager
+    if verbose and quiet:
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            "Cannot use both --verbose and --quiet flags",
+            suggestion="Choose either --verbose for detailed output or --quiet for minimal output"
+        )
+        raise typer.Exit(code=2)
+    
+    if verbose:
+        verbosity_level = VerbosityLevel.VERBOSE
+    elif quiet:
+        verbosity_level = VerbosityLevel.QUIET
+    else:
+        verbosity_level = VerbosityLevel.NORMAL
+    
+    verbosity_manager = VerbosityManager(verbosity_level)
+    VerbosityManager.set_current(verbosity_manager)
+    
+    # Display dry-run mode header if enabled (shown in NORMAL and VERBOSE modes)
+    if dry and verbosity_manager.should_print_info():
+        typer.secho("\n DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
     
     # Prompt for directory path
     path_input = typer.prompt("Enter the directory path to organize")
@@ -208,12 +422,28 @@ def folder(
     
     # Validate that path exists and is a directory
     if not target_path.exists():
-        typer.secho(f"Error: Path does not exist: {target_path}", fg="red", err=True)
-        raise typer.Exit(code=1)
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            f"Path does not exist: {target_path}",
+            suggestion="Check that the path is correct and accessible"
+        )
+        raise typer.Exit(code=2)
     
     if not target_path.is_dir():
-        typer.secho(f"Error: Path is not a directory: {target_path}", fg="red", err=True)
-        raise typer.Exit(code=1)
+        from .output_formatter import OutputFormatter
+        from rich.console import Console
+        
+        console = Console(stderr=True)
+        formatter = OutputFormatter(console)
+        formatter.print_error(
+            f"Path is not a directory: {target_path}",
+            suggestion="Provide a directory path, not a file path"
+        )
+        raise typer.Exit(code=2)
     
     # Create classifier and organizer with dry_run parameter
     classifier = FileClassifier()
@@ -227,8 +457,22 @@ def folder(
         before_snapshot = visualizer.capture_before_state()
         visualizer.render_before_tree(before_snapshot)
     
+    # Confirmation prompt for destructive operation (unless --dry or --yes is provided)
+    if not dry and not yes:
+        typer.echo(f"\nAbout to organize files in: {target_path}")
+        typer.echo("This will move files into categorized folders and remove empty directories.")
+        try:
+            confirm = PromptUtils.prompt_confirmation("Do you want to proceed?", default=False)
+            if not confirm:
+                typer.echo("Operation cancelled.")
+                raise typer.Exit(code=130)
+        except KeyboardInterrupt:
+            typer.echo("\nOperation cancelled.")
+            raise typer.Exit(code=130)
+    
     # Execute organization
-    typer.echo(f"Organizing files in: {target_path}")
+    if verbosity_manager.should_print_info():
+        typer.echo(f"Organizing files in: {target_path}")
     stats = organizer.organize()
     
     # Tree visualization after execution
@@ -247,27 +491,34 @@ def folder(
     
     # Display statistics based on mode
     if dry:
-        # Dry-run mode - use DryRunFormatter for detailed output
-        formatted_output = DryRunFormatter.format_output(stats, target_path)
-        typer.echo(formatted_output)
+        # Dry-run mode - use DryRunFormatter for detailed output (shown in NORMAL and VERBOSE modes)
+        if verbosity_manager.should_print_summary():
+            formatted_output = DryRunFormatter.format_output(stats, target_path)
+            typer.echo(formatted_output)
     else:
-        # Actual mode - show completion information
-        typer.echo("\n" + "="*50)
-        typer.secho("Folder cleanup complete!", fg="green", bold=True)
-        typer.echo("="*50)
+        # Actual mode - show completion information (shown in NORMAL and VERBOSE modes)
+        if verbosity_manager.should_print_summary():
+            typer.echo("\n" + "="*50)
+            typer.secho("Folder cleanup complete!", fg="green", bold=True)
+            typer.echo("="*50)
+            
+            typer.secho(f"\nFiles moved: {stats.files_moved}", fg="cyan", bold=True)
+            
+            if stats.files_by_category:
+                typer.secho("\nFiles moved by category:", fg="cyan")
+                for category, count in sorted(stats.files_by_category.items()):
+                    typer.echo(f"  {category}: {count}")
+            
+            typer.secho(f"\nEmpty folders removed: {stats.empty_folders_removed}", fg="cyan", bold=True)
         
-        typer.secho(f"\nFiles moved: {stats.files_moved}", fg="cyan", bold=True)
-        
-        if stats.files_by_category:
-            typer.secho("\nFiles moved by category:", fg="cyan")
-            for category, count in sorted(stats.files_by_category.items()):
-                typer.echo(f"  {category}: {count}")
-        
-        typer.secho(f"\nEmpty folders removed: {stats.empty_folders_removed}", fg="cyan", bold=True)
-        
+        # Errors are always shown
         if stats.errors > 0:
+            from .output_formatter import OutputFormatter
+            from rich.console import Console
+            
+            console = Console()
+            formatter = OutputFormatter(console)
+            
             typer.secho(f"\nErrors encountered: {stats.errors}", fg="red", bold=True)
             if stats.error_files:
-                typer.secho("\nError files:", fg="red")
-                for error_file in stats.error_files:
-                    typer.echo(f"  [X] {error_file}")
+                formatter.print_file_list(stats.error_files, status="error", title="Error files")

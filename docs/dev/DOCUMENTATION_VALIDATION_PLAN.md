@@ -160,18 +160,18 @@ def main():
             errors = validate_command_syntax(commands)
             
             if errors:
-                print(f"  ❌ Found {len(errors)} issues:")
+                print(f"   Found {len(errors)} issues:")
                 for error in errors:
                     print(f"    - {error}")
                 all_errors.extend(errors)
             else:
-                print(f"  ✅ No issues found")
+                print(f"   No issues found")
     
     if all_errors:
-        print(f"\n❌ Total issues: {len(all_errors)}")
+        print(f"\n Total issues: {len(all_errors)}")
         return 1
     else:
-        print("\n✅ All documentation validated successfully!")
+        print("\n All documentation validated successfully!")
         return 0
 
 if __name__ == '__main__':
@@ -263,8 +263,8 @@ When updating commands or features:
 
 ## Validation Status
 
-- ✅ Command syntax corrected across all documentation
-- ✅ Path handling fixed to strip quotes
-- ✅ All tests passing
+-  Command syntax corrected across all documentation
+-  Path handling fixed to strip quotes
+-  All tests passing
 - ⏳ Automated validation script (to be implemented)
 - ⏳ CI/CD integration (to be implemented)

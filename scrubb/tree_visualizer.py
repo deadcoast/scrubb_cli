@@ -278,7 +278,7 @@ class TreeVisualizer:
         
         # Display statistics
         if RICH_AVAILABLE:
-            console.print("\n📊 Statistics:", style="bold")
+            console.print("\n Statistics:", style="bold")
             console.print(f"  Files: {stats.total_files}")
             console.print(f"  Directories: {stats.total_directories}")
             console.print(f"  Total Size: {StatisticsCalculator.format_size(stats.total_size)}")

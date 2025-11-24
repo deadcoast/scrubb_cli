@@ -17,36 +17,36 @@ scrubb is designed as a modular, command-line application with clear separation 
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        CLI Layer                             │
-│                        (cli.py)                              │
-│  - Command parsing and routing                               │
-│  - User input/output                                         │
-│  - Error handling and display                                │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Business Logic Layer                      │
-├─────────────────────────────────────────────────────────────┤
-│  Emoji Scrubbing          │  Folder Cleanup                  │
-│  - scrubber.py            │  - folder_organizer.py           │
-│  - ignore.py              │  - file_classifier.py            │
-│                           │  - directory_scanner.py          │
-│                           │  - tree_visualizer.py            │
-│                           │  - tree_renderer.py              │
-│                           │  - tree_comparator.py            │
-│                           │  - statistics_calculator.py      │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Infrastructure Layer                       │
-│  - config.py (Configuration & XDG paths)                     │
-│  - tree_models.py (Data models)                              │
-│  - File system operations                                    │
-│  - Statistics persistence                                    │
-└─────────────────────────────────────────────────────────────┘
+
+                        CLI Layer                             
+                        (cli.py)                              
+  - Command parsing and routing                               
+  - User input/output                                         
+  - Error handling and display                                
+
+                            
+                            
+
+                    Business Logic Layer                      
+
+  Emoji Scrubbing            Folder Cleanup                  
+  - scrubber.py              - folder_organizer.py           
+  - ignore.py                - file_classifier.py            
+                             - directory_scanner.py          
+                             - tree_visualizer.py            
+                             - tree_renderer.py              
+                             - tree_comparator.py            
+                             - statistics_calculator.py      
+
+                            
+                            
+
+                   Infrastructure Layer                       
+  - config.py (Configuration & XDG paths)                     
+  - tree_models.py (Data models)                              
+  - File system operations                                    
+  - Statistics persistence                                    
+
 ```
 
 ## Core Components
@@ -121,12 +121,12 @@ scrubb is designed as a modular, command-line application with clear separation 
 **Organization Structure**:
 ```
 Scrubbed/
-├── Images/
-├── Video/
-├── Docs/
-│   ├── Markdown/
-│   └── Other Docs/
-└── Development/
+ Images/
+ Video/
+ Docs/
+    Markdown/
+    Other Docs/
+ Development/
 ```
 
 ##### file_classifier.py
@@ -222,23 +222,23 @@ Scrubbed/
 
 ```
 User Command
-    │
-    ▼
+    
+    
 CLI Parser (cli.py)
-    │
-    ▼
+    
+    
 Path Resolution (config.py)
-    │
-    ▼
+    
+    
 File Discovery & Filtering (ignore.py)
-    │
-    ▼
+    
+    
 Emoji Detection & Removal (scrubber.py)
-    │
-    ▼
+    
+    
 Statistics Update (scrubber.py)
-    │
-    ▼
+    
+    
 Results Display (cli.py)
 ```
 
@@ -246,37 +246,37 @@ Results Display (cli.py)
 
 ```
 User Command
-    │
-    ▼
+    
+    
 CLI Parser (cli.py)
-    │
-    ▼
+    
+    
 Directory Scanning (directory_scanner.py)
-    │
-    ├─► Tree Visualization (tree_visualizer.py)
-    │   └─► Tree Rendering (tree_renderer.py)
-    │
-    ▼
+    
+     Tree Visualization (tree_visualizer.py)
+        Tree Rendering (tree_renderer.py)
+    
+    
 File Classification (file_classifier.py)
-    │
-    ▼
+    
+    
 Dry-Run Check
-    │
-    ├─► [Dry-Run] Simulate & Display
-    │
-    └─► [Execute] File Organization (folder_organizer.py)
-            │
-            ├─► Move Files
-            ├─► Handle Conflicts
-            └─► Remove Empty Directories
-                │
-                ▼
+    
+     [Dry-Run] Simulate & Display
+    
+     [Execute] File Organization (folder_organizer.py)
+            
+             Move Files
+             Handle Conflicts
+             Remove Empty Directories
+                
+                
             Statistics Calculation (statistics_calculator.py)
-                │
-                ▼
+                
+                
             Tree Comparison (tree_comparator.py)
-                │
-                ▼
+                
+                
             Results Display (cli.py)
 ```
 

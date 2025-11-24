@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\cli.py
+# hypothesis_version: 6.148.2
+
+[130, '\nError files:', '\nModified files:', '"', "'", '--dry', '--edit', '--quiet', '--reset', '--show', '--top', '--tree', '--verbose', '--yes', '-p', '-q', '-v', '-y', '=', 'Operation cancelled.', 'allow_extra_args', 'c', 'cyan', 'default_root', 'e', 'emoji', 'emojis_removed', 'errors', 'f', 'files_modified', 'files_processed', 'files_skipped', 'green', 'ignore_patterns', 'main', 'red', 'runs', 's', 'scoped_scrub', 'text_extensions', 'yellow']

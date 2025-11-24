@@ -82,19 +82,19 @@ python validate_docs.py
 Documentation Validation Report
 ======================================================================
 
-📋 Checking command syntax...
+ Checking command syntax...
   Checking README.md...
-    ✅ No syntax issues found
+     No syntax issues found
   Checking COMMAND_REFERENCE.md...
-    ✅ No syntax issues found
+     No syntax issues found
   Checking OVERVIEW.md...
-    ✅ No syntax issues found
+     No syntax issues found
 
-📁 Checking file extension documentation...
-  ✅ File extensions match code
+ Checking file extension documentation...
+   File extensions match code
 
 ======================================================================
-✅ All documentation validated successfully!
+ All documentation validated successfully!
 ```
 
 ## Verification
@@ -117,33 +117,33 @@ pytest tests/ -v
 ```bash
 scrubb folder --dry
 # Enter: test_files
-# ✅ Works correctly
+#  Works correctly
 ```
 
 **Test 2: Path with spaces (quoted)**
 ```bash
 scrubb folder --dry
 # Enter: "C:\Users\Name\My Documents"
-# ✅ Quotes stripped, path resolved correctly
+#  Quotes stripped, path resolved correctly
 ```
 
 **Test 3: Path with spaces (unquoted in prompt)**
 ```bash
 scrubb folder --dry
 # Enter: C:\Users\Name\My Documents
-# ✅ Works correctly (no quotes needed in interactive prompt)
+#  Works correctly (no quotes needed in interactive prompt)
 ```
 
 **Test 4: Help command**
 ```bash
 scrubb --help
-# ✅ Shows folder command in list
+#  Shows folder command in list
 ```
 
 **Test 5: Folder help**
 ```bash
 scrubb folder --help
-# ✅ Shows detailed help for folder command
+#  Shows detailed help for folder command
 ```
 
 ## Impact
@@ -161,9 +161,9 @@ scrubb folder --help
 ## Recommendations
 
 ### Immediate Actions
-- ✅ All fixes applied and tested
-- ✅ Documentation updated across all files
-- ✅ Validation infrastructure in place
+-  All fixes applied and tested
+-  Documentation updated across all files
+-  Validation infrastructure in place
 
 ### Future Improvements
 1. **CI/CD Integration**: Add `validate_docs.py` to CI pipeline
@@ -199,9 +199,9 @@ When updating commands:
 
 All three issues have been successfully resolved:
 
-1. ✅ Command syntax unified to `scrubb folder` (not `--folder`)
-2. ✅ Path handling fixed to strip quotes from user input
-3. ✅ Validation infrastructure created to prevent future issues
+1.  Command syntax unified to `scrubb folder` (not `--folder`)
+2.  Path handling fixed to strip quotes from user input
+3.  Validation infrastructure created to prevent future issues
 
 The project now has:
 - Accurate, consistent documentation

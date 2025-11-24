@@ -40,7 +40,7 @@ def test_tree_flag_with_actual_execution():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"
@@ -145,7 +145,7 @@ def test_tree_visualization_with_empty_directory():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"
@@ -176,7 +176,7 @@ def test_tree_visualization_with_single_file():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"
@@ -218,7 +218,7 @@ def test_tree_visualization_with_nested_directories():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"
@@ -260,7 +260,7 @@ def test_tree_visualization_with_large_directory():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"
@@ -301,7 +301,7 @@ def test_output_ordering():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0, f"Command failed with output:\n{result.stdout}"

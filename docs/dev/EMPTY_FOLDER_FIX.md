@@ -145,7 +145,7 @@ Test directory with hidden files:
 
 After organization:
   Files moved: 3
-  Empty folders removed: 0  ❌
+  Empty folders removed: 0  
   
   Leftover directories:
     folder_with_ds_store/ (contains .DS_Store)
@@ -169,7 +169,7 @@ Test directory with hidden files:
 
 After organization:
   Files moved: 3
-  Empty folders removed: 3  ✅
+  Empty folders removed: 3  
   
   No leftover directories!
 ```

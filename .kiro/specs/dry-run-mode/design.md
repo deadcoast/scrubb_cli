@@ -53,7 +53,7 @@ def folder(
 ):
     """Organize files into categorized folders and remove empty directories."""
     if dry:
-        typer.secho("\n🔍 DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
+        typer.secho("\n DRY RUN MODE - No changes will be made\n", fg=typer.colors.YELLOW, bold=True)
     
     # Existing path prompt and validation
     # Pass dry_run parameter to FolderOrganizer
@@ -219,7 +219,7 @@ class DryRunFormatter:
         output.append("="*70 + "\n")
         
         # Summary statistics
-        output.append("📊 SUMMARY")
+        output.append(" SUMMARY")
         output.append(f"  Files to move: {stats.files_to_move}")
         output.append(f"  Directories to create: {len(stats.directories_to_create)}")
         output.append(f"  Empty directories to remove: {stats.empty_folders_to_remove}")
@@ -228,19 +228,19 @@ class DryRunFormatter:
         
         # Files by category
         if stats.files_by_category:
-            output.append("\n📁 FILES BY CATEGORY")
+            output.append("\n FILES BY CATEGORY")
             for category, count in sorted(stats.files_by_category.items()):
                 output.append(f"  {category}: {count} files")
         
         # Directories to create
         if stats.directories_to_create:
-            output.append("\n➕ DIRECTORIES TO CREATE")
+            output.append("\n DIRECTORIES TO CREATE")
             for dir_path in sorted(stats.directories_to_create):
                 output.append(f"  {dir_path}")
         
         # File operations (grouped by category)
         if stats.file_operations:
-            output.append("\n📦 FILE OPERATIONS")
+            output.append("\n FILE OPERATIONS")
             by_category = {}
             for op in stats.file_operations:
                 cat = op.category.value
@@ -256,30 +256,30 @@ class DryRunFormatter:
         
         # Conflicts
         if stats.conflicts:
-            output.append("\n⚠️  NAME CONFLICTS")
+            output.append("\n  NAME CONFLICTS")
             for conflict in stats.conflicts:
                 output.append(f"  {conflict.original_name} → {conflict.resolved_name}")
                 output.append(f"    Category: {conflict.category}")
         
         # Skipped files
         if stats.skipped_files:
-            output.append("\n⏭️  SKIPPED FILES")
+            output.append("\n⏭  SKIPPED FILES")
             for skipped in stats.skipped_files:
                 output.append(f"  {skipped.path} - {skipped.reason}")
         
         # Empty directories to remove
         if stats.directories_to_remove:
-            output.append("\n🗑️  EMPTY DIRECTORIES TO REMOVE")
+            output.append("\n  EMPTY DIRECTORIES TO REMOVE")
             for dir_path in sorted(stats.directories_to_remove):
                 output.append(f"  {dir_path}")
         
         # Potential errors
         if stats.potential_errors:
-            output.append("\n❌ POTENTIAL ERRORS")
+            output.append("\n POTENTIAL ERRORS")
             for error in stats.potential_errors:
                 output.append(f"  {error}")
         else:
-            output.append("\n✅ No potential errors detected")
+            output.append("\n No potential errors detected")
         
         # Footer
         output.append("\n" + "="*70)

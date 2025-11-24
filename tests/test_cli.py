@@ -15,6 +15,161 @@ from scrubb.folder_organizer import FolderOrganizer
 runner = CliRunner()
 
 
+@settings(max_examples=100, deadline=1000)
+@given(
+    path_arg=st.one_of(
+        st.none(),
+        st.just('.'),
+        st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd', 'Pd'))).filter(
+            lambda x: x not in ['..', '.', '/', '\\'] and not x.startswith('-')
+        )
+    )
+)
+def test_emoji_command_name_consistency(path_arg):
+    """
+    **Feature: cli-improvements, Property 1: Command name consistency**
+    **Validates: Requirements 1.1**
+    
+    For any valid path argument, invoking `scrubb emoji [PATH] .` should execute 
+    emoji scrubbing operations with identical functionality to the former `main` command.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file with some content (no emojis to avoid encoding issues)
+        test_file = root / "test.txt"
+        test_file.write_text("Hello World", encoding='utf-8')
+        
+        # Build command arguments
+        if path_arg is None:
+            # Test with no arguments (should use default root)
+            args = ['emoji']
+        elif path_arg == '.':
+            # Test with just '.' executor
+            args = ['emoji', '.']
+        else:
+            # Test with path and '.' executor
+            # Create a subdirectory for the path
+            subdir = root / path_arg
+            try:
+                subdir.mkdir(exist_ok=True)
+                (subdir / "test.txt").write_text("Hello World", encoding='utf-8')
+                args = ['emoji', str(subdir), '.']
+            except (OSError, ValueError):
+                # Skip invalid paths
+                return
+        
+        # Mock the config to use our test directory
+        mock_config = {
+            "default_root": str(root),
+            "ignore_patterns": [".git", "__pycache__", "node_modules"],
+            "text_extensions": [".txt", ".md", ".py", ".js"]
+        }
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            with patch('scrubb.cli.load_stats', return_value={
+                "runs": 0,
+                "files_processed": 0,
+                "files_modified": 0,
+                "files_skipped": 0,
+                "errors": 0,
+                "emojis_removed": 0,
+                "scoped_scrub": {}
+            }):
+                with patch('scrubb.cli.save_stats'):
+                    result = runner.invoke(app, args)
+                    
+                    # Check that the command executed successfully or with expected error codes
+                    # Exit code 0 = success, 2 = path not found (acceptable for some generated paths)
+                    assert result.exit_code in [0, 2], f"Unexpected exit code: {result.exit_code}"
+                    
+                    # If successful, check that emoji scrubbing output is present
+                    if result.exit_code == 0:
+                        assert "scrubb run:" in result.stdout, "Expected emoji scrubbing output not found"
+                        assert "files_processed=" in result.stdout, "Expected statistics output not found"
+                        assert "emojis_removed=" in result.stdout, "Expected emoji removal statistics not found"
+
+
+@settings(max_examples=100, deadline=1000)
+@given(
+    path_arg=st.one_of(
+        st.none(),
+        st.just('.'),
+        st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd', 'Pd'))).filter(
+            lambda x: x not in ['..', '.', '/', '\\'] and not x.startswith('-')
+        )
+    )
+)
+def test_deprecation_warning_display(path_arg):
+    """
+    **Feature: cli-improvements, Property 2: Deprecation warning display**
+    **Validates: Requirements 1.2**
+    
+    For any valid path argument, invoking `scrubb main [PATH] .` should display 
+    a deprecation warning in the output.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file with some content (no emojis to avoid encoding issues)
+        test_file = root / "test.txt"
+        test_file.write_text("Hello World", encoding='utf-8')
+        
+        # Build command arguments for 'main' command
+        if path_arg is None:
+            # Test with no arguments (should use default root)
+            args = ['main']
+        elif path_arg == '.':
+            # Test with just '.' executor
+            args = ['main', '.']
+        else:
+            # Test with path and '.' executor
+            # Create a subdirectory for the path
+            subdir = root / path_arg
+            try:
+                subdir.mkdir(exist_ok=True)
+                (subdir / "test.txt").write_text("Hello World", encoding='utf-8')
+                args = ['main', str(subdir), '.']
+            except (OSError, ValueError):
+                # Skip invalid paths
+                return
+        
+        # Mock the config to use our test directory
+        mock_config = {
+            "default_root": str(root),
+            "ignore_patterns": [".git", "__pycache__", "node_modules"],
+            "text_extensions": [".txt", ".md", ".py", ".js"]
+        }
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            with patch('scrubb.cli.load_stats', return_value={
+                "runs": 0,
+                "files_processed": 0,
+                "files_modified": 0,
+                "files_skipped": 0,
+                "errors": 0,
+                "emojis_removed": 0,
+                "scoped_scrub": {}
+            }):
+                with patch('scrubb.cli.save_stats'):
+                    result = runner.invoke(app, args)
+                    
+                    # Check that the command executed successfully or with expected error codes
+                    # Exit code 0 = success, 2 = path not found (acceptable for some generated paths)
+                    assert result.exit_code in [0, 2], f"Unexpected exit code: {result.exit_code}"
+                    
+                    # Check that deprecation warning is displayed in stderr or output
+                    output = result.stdout + result.stderr
+                    assert "deprecated" in output.lower(), "Deprecation warning not found in output"
+                    assert "main" in output.lower(), "Reference to 'main' command not found in deprecation warning"
+                    assert "emoji" in output.lower(), "Reference to 'emoji' command not found in deprecation warning"
+                    
+                    # If successful, check that emoji scrubbing still occurred (backward compatibility)
+                    if result.exit_code == 0:
+                        assert "scrubb run:" in result.stdout, "Expected emoji scrubbing output not found"
+                        assert "files_processed=" in result.stdout, "Expected statistics output not found"
+
+
 @settings(max_examples=100)
 @given(
     path_type=st.sampled_from(['absolute', 'relative', 'tilde']),
@@ -101,7 +256,8 @@ def test_folder_command_with_valid_path():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder'])
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0
@@ -120,12 +276,12 @@ def test_folder_command_with_nonexistent_path():
     with patch('typer.prompt', return_value=nonexistent_path):
         result = runner.invoke(app, ['folder'])
         
-        # Check command failed with appropriate exit code
-        assert result.exit_code == 1
+        # Check command failed with appropriate exit code (2 for invalid input)
+        assert result.exit_code == 2
         
         # Check error message is displayed (could be in stdout or stderr)
         output = result.stdout + result.stderr
-        assert "Error: Path does not exist:" in output
+        assert "Path does not exist:" in output
 
 
 def test_folder_command_with_file_path():
@@ -141,12 +297,12 @@ def test_folder_command_with_file_path():
         with patch('typer.prompt', return_value=str(test_file)):
             result = runner.invoke(app, ['folder'])
             
-            # Check command failed
-            assert result.exit_code == 1
+            # Check command failed (2 for invalid input)
+            assert result.exit_code == 2
             
             # Check error message (could be in stdout or stderr)
             output = result.stdout + result.stderr
-            assert "Error: Path is not a directory:" in output
+            assert "Path is not a directory:" in output
 
 
 def test_folder_command_statistics_display():
@@ -162,7 +318,8 @@ def test_folder_command_statistics_display():
         
         # Mock the prompt
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder'])
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--yes'])
             
             # Check statistics are displayed
             assert "Files moved:" in result.stdout
@@ -185,11 +342,13 @@ def test_folder_command_error_display():
         # Mock shutil.move to raise an error
         with patch('typer.prompt', return_value=str(root)):
             with patch('shutil.move', side_effect=PermissionError("Permission denied")):
-                result = runner.invoke(app, ['folder'])
+                # Use --yes flag to bypass confirmation prompt
+                result = runner.invoke(app, ['folder', '--yes'])
                 
                 # Check that errors are reported
                 assert "Errors encountered:" in result.stdout
-                assert "Error files:" in result.stdout
+                # The new format uses "Error files" without the colon in the title
+                assert "Error files" in result.stdout
 
 
 def test_folder_mode_exclusivity():
@@ -203,7 +362,8 @@ def test_folder_mode_exclusivity():
         
         # Run folder command
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder'])
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--yes'])
             
             # Check that emoji scrubbing output is NOT present
             assert "emojis_removed" not in result.stdout
@@ -328,7 +488,8 @@ def test_regular_mode_not_affected_by_dry_run():
         
         # Run in regular mode (without --dry)
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder'])
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0
@@ -392,7 +553,8 @@ def test_folder_command_tree_flag_recognized():
         
         # Mock the prompt to return our test directory
         with patch('typer.prompt', return_value=str(root)):
-            result = runner.invoke(app, ['folder', '--tree'])
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--tree', '--yes'])
             
             # Check command succeeded
             assert result.exit_code == 0
@@ -435,3 +597,446 @@ def test_folder_command_tree_and_dry_flags_together():
             
             # Check that standard dry-run output is still present
             assert "DRY RUN PREVIEW" in result.stdout
+
+
+@settings(max_examples=100, deadline=2000)
+@given(
+    command_pair=st.sampled_from([
+        ('emoji', 'e'),
+        ('stats', 's'),
+        ('config', 'c'),
+    ]),
+    test_scenario=st.sampled_from(['basic', 'with_flag'])
+)
+def test_command_alias_equivalence(command_pair, test_scenario):
+    """
+    **Feature: cli-improvements, Property 6: Command alias equivalence**
+    **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
+    
+    For any command and its alias (emoji/e, folder/f, stats/s, config/c), 
+    invoking both with identical arguments should produce identical output and exit codes.
+    """
+    full_command, alias = command_pair
+    
+    # Test different scenarios based on command type
+    if full_command == 'emoji':
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            
+            # Create a test file
+            test_file = root / "test.txt"
+            test_file.write_text("Hello World", encoding='utf-8')
+            
+            # Mock the config
+            mock_config = {
+                "default_root": str(root),
+                "ignore_patterns": [".git", "__pycache__", "node_modules"],
+                "text_extensions": [".txt", ".md", ".py", ".js"]
+            }
+            
+            mock_stats = {
+                "runs": 0,
+                "files_processed": 0,
+                "files_modified": 0,
+                "files_skipped": 0,
+                "errors": 0,
+                "emojis_removed": 0,
+                "scoped_scrub": {}
+            }
+            
+            # Build arguments based on scenario
+            if test_scenario == 'basic':
+                args_full = [full_command]
+                args_alias = [alias]
+            else:  # with_flag
+                args_full = [full_command, '.']
+                args_alias = [alias, '.']
+            
+            with patch('scrubb.cli.load_config', return_value=mock_config):
+                with patch('scrubb.cli.load_stats', return_value=mock_stats):
+                    with patch('scrubb.cli.save_stats'):
+                        # Run with full command name
+                        result_full = runner.invoke(app, args_full)
+                        
+                        # Run with alias
+                        result_alias = runner.invoke(app, args_alias)
+                        
+                        # Check that exit codes match
+                        assert result_full.exit_code == result_alias.exit_code, \
+                            f"Exit codes differ: {full_command}={result_full.exit_code}, {alias}={result_alias.exit_code}"
+                        
+                        # Check that key output elements are present in both
+                        if result_full.exit_code == 0:
+                            assert "scrubb run:" in result_full.stdout
+                            assert "scrubb run:" in result_alias.stdout
+                            assert "files_processed=" in result_full.stdout
+                            assert "files_processed=" in result_alias.stdout
+    
+    elif full_command == 'stats':
+        mock_stats = {
+            "runs": 5,
+            "files_processed": 10,
+            "files_modified": 3,
+            "files_skipped": 2,
+            "errors": 0,
+            "emojis_removed": 15,
+            "scoped_scrub": {"": 5, "": 10}
+        }
+        
+        # Build arguments based on scenario
+        if test_scenario == 'basic':
+            args_full = [full_command]
+            args_alias = [alias]
+        else:  # with_flag
+            args_full = [full_command, '--top']
+            args_alias = [alias, '--top']
+        
+        with patch('scrubb.cli.load_stats', return_value=mock_stats):
+            # Run with full command name
+            result_full = runner.invoke(app, args_full)
+            
+            # Run with alias
+            result_alias = runner.invoke(app, args_alias)
+            
+            # Check that exit codes match
+            assert result_full.exit_code == result_alias.exit_code, \
+                f"Exit codes differ: {full_command}={result_full.exit_code}, {alias}={result_alias.exit_code}"
+            
+            # Check that key output elements are present in both
+            if result_full.exit_code == 0:
+                assert "runs:" in result_full.stdout
+                assert "runs:" in result_alias.stdout
+                assert "files_processed:" in result_full.stdout
+                assert "files_processed:" in result_alias.stdout
+                assert "emojis_removed:" in result_full.stdout
+                assert "emojis_removed:" in result_alias.stdout
+                
+                # If --top flag was used, check for emoji statistics table
+                if test_scenario == 'with_flag':
+                    # Check for table headers (new rich table format)
+                    assert ("Top Emoji Statistics" in result_full.stdout or 
+                            "Rank" in result_full.stdout or 
+                            "Emoji" in result_full.stdout)
+                    assert ("Top Emoji Statistics" in result_alias.stdout or 
+                            "Rank" in result_alias.stdout or 
+                            "Emoji" in result_alias.stdout)
+    
+    elif full_command == 'config':
+        mock_config = {
+            "default_root": "/test/path",
+            "ignore_patterns": [".git", "__pycache__"],
+            "text_extensions": [".txt", ".md"]
+        }
+        
+        # Build arguments based on scenario
+        if test_scenario == 'basic':
+            args_full = [full_command]
+            args_alias = [alias]
+        else:  # with_flag
+            args_full = [full_command, '--show']
+            args_alias = [alias, '--show']
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            # Run with full command name
+            result_full = runner.invoke(app, args_full)
+            
+            # Run with alias
+            result_alias = runner.invoke(app, args_alias)
+            
+            # Check that exit codes match
+            assert result_full.exit_code == result_alias.exit_code, \
+                f"Exit codes differ: {full_command}={result_full.exit_code}, {alias}={result_alias.exit_code}"
+            
+            # Check that key output elements are present in both
+            if result_full.exit_code == 0:
+                assert "default_root:" in result_full.stdout
+                assert "default_root:" in result_alias.stdout
+                assert "config_file:" in result_full.stdout
+                assert "config_file:" in result_alias.stdout
+                assert "stats_file:" in result_full.stdout
+                assert "stats_file:" in result_alias.stdout
+
+
+
+def test_emoji_command_verbose_flag():
+    """Test that emoji command accepts --verbose flag."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file with emoji
+        test_file = root / "test.txt"
+        test_file.write_text("Hello  World", encoding='utf-8')
+        
+        # Mock the config
+        mock_config = {
+            "default_root": str(root),
+            "ignore_patterns": [".git", "__pycache__", "node_modules"],
+            "text_extensions": [".txt", ".md", ".py", ".js"]
+        }
+        
+        mock_stats = {
+            "runs": 0,
+            "files_processed": 0,
+            "files_modified": 0,
+            "files_skipped": 0,
+            "errors": 0,
+            "emojis_removed": 0,
+            "scoped_scrub": {}
+        }
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            with patch('scrubb.cli.load_stats', return_value=mock_stats):
+                with patch('scrubb.cli.save_stats'):
+                    result = runner.invoke(app, ['emoji', '--verbose'])
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0
+                    
+                    # Check that verbose output is present (modified files list)
+                    assert "scrubb run:" in result.stdout
+
+
+def test_emoji_command_quiet_flag():
+    """Test that emoji command accepts --quiet flag."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file
+        test_file = root / "test.txt"
+        test_file.write_text("Hello World", encoding='utf-8')
+        
+        # Mock the config
+        mock_config = {
+            "default_root": str(root),
+            "ignore_patterns": [".git", "__pycache__", "node_modules"],
+            "text_extensions": [".txt", ".md", ".py", ".js"]
+        }
+        
+        mock_stats = {
+            "runs": 0,
+            "files_processed": 0,
+            "files_modified": 0,
+            "files_skipped": 0,
+            "errors": 0,
+            "emojis_removed": 0,
+            "scoped_scrub": {}
+        }
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            with patch('scrubb.cli.load_stats', return_value=mock_stats):
+                with patch('scrubb.cli.save_stats'):
+                    result = runner.invoke(app, ['emoji', '--quiet'])
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0
+                    
+                    # In quiet mode, summary output should be suppressed
+                    # Only errors would be shown (if any)
+                    assert "scrubb run:" not in result.stdout or result.stdout.strip() == ""
+
+
+def test_emoji_command_verbose_and_quiet_conflict():
+    """Test that using both --verbose and --quiet flags results in an error."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file
+        test_file = root / "test.txt"
+        test_file.write_text("Hello World", encoding='utf-8')
+        
+        # Mock the config
+        mock_config = {
+            "default_root": str(root),
+            "ignore_patterns": [".git", "__pycache__", "node_modules"],
+            "text_extensions": [".txt", ".md", ".py", ".js"]
+        }
+        
+        with patch('scrubb.cli.load_config', return_value=mock_config):
+            result = runner.invoke(app, ['emoji', '--verbose', '--quiet'])
+            
+            # Check command failed with appropriate exit code
+            assert result.exit_code == 2
+            
+            # Check error message
+            output = result.stdout + result.stderr
+            assert "Cannot use both --verbose and --quiet" in output
+
+
+def test_folder_command_verbose_flag():
+    """Test that folder command accepts --verbose flag."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create test files
+        (root / "test1.txt").touch()
+        (root / "test2.jpg").touch()
+        
+        # Mock the prompt to return our test directory
+        with patch('typer.prompt', return_value=str(root)):
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--verbose', '--yes'])
+            
+            # Check command succeeded
+            assert result.exit_code == 0
+            
+            # Check that output is present
+            assert "Organizing files in:" in result.stdout
+            assert "Folder cleanup complete!" in result.stdout
+
+
+def test_folder_command_quiet_flag():
+    """Test that folder command accepts --quiet flag."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create test files
+        (root / "test1.txt").touch()
+        (root / "test2.jpg").touch()
+        
+        # Mock the prompt to return our test directory
+        with patch('typer.prompt', return_value=str(root)):
+            # Use --yes flag to bypass confirmation prompt
+            result = runner.invoke(app, ['folder', '--quiet', '--yes'])
+            
+            # Check command succeeded
+            assert result.exit_code == 0
+            
+            # In quiet mode, most output should be suppressed
+            # Only errors would be shown (if any)
+            assert "Folder cleanup complete!" not in result.stdout or result.stdout.strip() == ""
+
+
+def test_folder_command_verbose_and_quiet_conflict():
+    """Test that using both --verbose and --quiet flags results in an error."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        
+        # Create a test file
+        (root / "test.txt").touch()
+        
+        # Mock the prompt to return our test directory
+        with patch('typer.prompt', return_value=str(root)):
+            result = runner.invoke(app, ['folder', '--verbose', '--quiet'])
+            
+            # Check command failed with appropriate exit code
+            assert result.exit_code == 2
+            
+            # Check error message
+            output = result.stdout + result.stderr
+            assert "Cannot use both --verbose and --quiet" in output
+
+
+@settings(max_examples=100, deadline=2000)
+@given(
+    command_type=st.sampled_from(['stats_reset', 'folder']),
+    use_yes_flag=st.booleans()
+)
+def test_auto_confirm_bypass(command_type, use_yes_flag):
+    """
+    **Feature: cli-improvements, Property 10: Auto-confirm bypass**
+    **Validates: Requirements 8.5**
+    
+    For any destructive operation executed with --yes flag, the command should 
+    complete without displaying confirmation prompts.
+    """
+    if command_type == 'stats_reset':
+        # Test stats --reset command with/without --yes flag
+        mock_stats = {
+            "runs": 5,
+            "files_processed": 10,
+            "files_modified": 3,
+            "files_skipped": 2,
+            "errors": 0,
+            "emojis_removed": 15,
+            "scoped_scrub": {"": 5, "": 10}
+        }
+        
+        # Build arguments
+        if use_yes_flag:
+            args = ['stats', '--reset', '--yes']
+        else:
+            args = ['stats', '--reset']
+        
+        with patch('scrubb.cli.load_stats', return_value=mock_stats):
+            with patch('scrubb.cli.save_stats'):
+                if use_yes_flag:
+                    # With --yes flag, should complete without prompting
+                    result = runner.invoke(app, args)
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}"
+                    
+                    # Check that reset message is displayed
+                    assert "Persistent stats reset" in result.stdout
+                    
+                    # Check that no confirmation prompt was displayed
+                    # (typer.confirm would show "Are you sure" in the output)
+                    assert "Are you sure" not in result.stdout
+                else:
+                    # Without --yes flag, should prompt for confirmation
+                    # Simulate user declining the confirmation
+                    result = runner.invoke(app, args, input='n\n')
+                    
+                    # Check that operation was cancelled
+                    assert result.exit_code == 130, f"Expected exit code 130, got {result.exit_code}"
+                    
+                    # Check that cancellation message is displayed
+                    assert "Operation cancelled" in result.stdout
+                    
+                    # Now test with user accepting the confirmation
+                    result = runner.invoke(app, args, input='y\n')
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}"
+                    
+                    # Check that reset message is displayed
+                    assert "Persistent stats reset" in result.stdout
+    
+    elif command_type == 'folder':
+        # Test folder command with/without --yes flag
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            
+            # Create test files
+            (root / "test1.txt").touch()
+            (root / "test2.jpg").touch()
+            
+            # Build arguments
+            if use_yes_flag:
+                args = ['folder', '--yes']
+            else:
+                args = ['folder']
+            
+            # Mock the prompt to return our test directory
+            with patch('typer.prompt', return_value=str(root)):
+                if use_yes_flag:
+                    # With --yes flag, should complete without prompting for confirmation
+                    result = runner.invoke(app, args)
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}"
+                    
+                    # Check that completion message is displayed
+                    assert "Folder cleanup complete!" in result.stdout
+                    
+                    # Check that no confirmation prompt was displayed
+                    assert "Do you want to proceed?" not in result.stdout
+                else:
+                    # Without --yes flag, should prompt for confirmation
+                    # Simulate user declining the confirmation
+                    result = runner.invoke(app, args, input='n\n')
+                    
+                    # Check that operation was cancelled
+                    assert result.exit_code == 130, f"Expected exit code 130, got {result.exit_code}"
+                    
+                    # Check that cancellation message is displayed
+                    assert "Operation cancelled" in result.stdout
+                    
+                    # Now test with user accepting the confirmation
+                    result = runner.invoke(app, args, input='y\n')
+                    
+                    # Check command succeeded
+                    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}"
+                    
+                    # Check that completion message is displayed
+                    assert "Folder cleanup complete!" in result.stdout

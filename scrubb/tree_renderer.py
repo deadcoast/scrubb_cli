@@ -62,7 +62,7 @@ class TreeRenderer:
         except Exception as e:
             # Handle rendering errors gracefully
             logger.error(f"Failed to render tree: {e}", exc_info=True)
-            print(f"\n⚠️  Warning: Tree rendering failed: {e}")
+            print(f"\n  Warning: Tree rendering failed: {e}")
             print(f"Root path: {snapshot.root_path}")
             print("The cleanup operation will continue.\n")
             
@@ -71,7 +71,7 @@ class TreeRenderer:
                 self._render_simple(snapshot, title)
             except Exception as fallback_error:
                 logger.error(f"Fallback rendering also failed: {fallback_error}", exc_info=True)
-                print(f"⚠️  Unable to display tree structure. Error: {fallback_error}")
+                print(f"  Unable to display tree structure. Error: {fallback_error}")
     
     def _render_simple(self, snapshot: DirectorySnapshot, title: str) -> None:
         """Simple fallback renderer when rich is unavailable.
@@ -86,7 +86,7 @@ class TreeRenderer:
             self._print_simple_tree(snapshot.root_node, prefix="", depth=0)
         except Exception as e:
             logger.error(f"Simple rendering failed: {e}", exc_info=True)
-            print(f"⚠️  Unable to render tree: {e}")
+            print(f"  Unable to render tree: {e}")
     
     def _print_simple_tree(self, node: DirectoryNode, prefix: str, depth: int) -> None:
         """Recursively print tree using simple ASCII characters.
@@ -246,7 +246,7 @@ class SimpleTreeRenderer:
             self._print_tree(snapshot.root_node, prefix="", is_last=True, depth=0)
         except Exception as e:
             logger.error(f"Simple tree rendering failed: {e}", exc_info=True)
-            print(f"\n⚠️  Warning: Unable to render tree: {e}")
+            print(f"\n  Warning: Unable to render tree: {e}")
             print(f"Root path: {snapshot.root_path}")
             print("The cleanup operation will continue.\n")
     

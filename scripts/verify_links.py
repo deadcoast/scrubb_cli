@@ -65,7 +65,7 @@ def verify_links():
         for doc, text, target in broken_links:
             print(f"  {doc}: [{text}]({target})")
     else:
-        print("\n✓ All links are valid!")
+        print("\n All links are valid!")
     
     return len(broken_links) == 0
 

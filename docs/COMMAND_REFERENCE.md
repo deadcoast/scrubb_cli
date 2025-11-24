@@ -2,21 +2,50 @@
 
 ## Quick Command Table
 
-| Command | Description | Function |
-|---------|-------------|----------|
-| `scrubb main [PATH] .` | Scrub emojis from files/directories | Remove emojis from text files with detailed output |
-| `scrubb folder` | Organize files into categories | Move files to categorized folders and remove empty directories |
-| `scrubb folder --dry` | Preview folder organization | Show what would happen without making changes |
-| `scrubb folder --tree` | Organize with tree visualization | Show before/after directory trees with statistics |
-| `scrubb folder --tree --dry` | Preview with tree visualization | Show current and simulated trees without making changes |
-| `scrubb stats` | Show persistent statistics | Display accumulated statistics across all runs |
-| `scrubb stats --top` | Show top 5 emoji tokens | Display most frequently removed emoji tokens |
-| `scrubb stats --reset` | Reset all statistics | Clear all persistent statistics |
-| `scrubb config` | Show configuration | Display current configuration and file locations |
-| `scrubb config --show` | Show configuration | Same as `scrubb config` (explicit) |
-| `scrubb config -p PATH --edit` | Set default root | Update the default root directory path |
-| `scrubb --help` | Show help | Display general help information |
-| `scrubb COMMAND --help` | Show command help | Display detailed help for specific command |
+| Command | Aliases | Description | Function |
+|---------|---------|-------------|----------|
+| `scrubb emoji [PATH] .` | `e` | Scrub emojis from files/directories | Remove emojis from text files with detailed output |
+| `scrubb folder` | `f` | Organize files into categories | Move files to categorized folders and remove empty directories |
+| `scrubb folder --dry` | `f --dry` | Preview folder organization | Show what would happen without making changes |
+| `scrubb folder --tree` | `f --tree` | Organize with tree visualization | Show before/after directory trees with statistics |
+| `scrubb folder --tree --dry` | `f --tree --dry` | Preview with tree visualization | Show current and simulated trees without making changes |
+| `scrubb stats` | `s` | Show persistent statistics | Display accumulated statistics across all runs |
+| `scrubb stats --top` | `s --top` | Show top 5 emoji tokens | Display most frequently removed emoji tokens |
+| `scrubb stats --reset` | `s --reset` | Reset all statistics | Clear all persistent statistics (requires confirmation) |
+| `scrubb config` | `c` | Show configuration | Display current configuration and file locations |
+| `scrubb config --show` | `c --show` | Show configuration | Same as `scrubb config` (explicit) |
+| `scrubb config -p PATH --edit` | `c -p PATH --edit` | Set default root | Update the default root directory path |
+| `scrubb --help` | | Show help | Display general help information |
+| `scrubb COMMAND --help` | | Show command help | Display detailed help for specific command |
+
+### Command Aliases
+
+All commands support short aliases for faster typing:
+- `scrubb e` → `scrubb emoji` (emoji scrubbing)
+- `scrubb f` → `scrubb folder` (folder organization)
+- `scrubb s` → `scrubb stats` (statistics)
+- `scrubb c` → `scrubb config` (configuration)
+
+Aliases work with all flags and options. For example:
+```bash
+scrubb e .              # Same as: scrubb emoji .
+scrubb f --dry          # Same as: scrubb folder --dry
+scrubb s --top          # Same as: scrubb stats --top
+scrubb c --show         # Same as: scrubb config --show
+```
+
+### Global Options
+
+All commands support verbosity control:
+- `--verbose` or `-v`: Display detailed debug information including file-by-file processing and timestamps
+- `--quiet` or `-q`: Suppress all non-essential output, showing only errors and warnings
+
+Examples:
+```bash
+scrubb emoji . --verbose        # Detailed output with debug info
+scrubb folder --dry --quiet     # Minimal output, errors only
+scrubb stats --top -v           # Statistics with verbose details
+```
 
 ---
 
@@ -31,7 +60,7 @@
 # Preview mode (dry-run)
 scrubb folder --dry
 
-# Actual execution
+# Actual execution (requires confirmation)
 scrubb folder
 
 # With tree visualization
@@ -39,20 +68,34 @@ scrubb folder --tree
 
 # Preview with tree visualization
 scrubb folder --tree --dry
+
+# Skip confirmation prompt
+scrubb folder --yes
+
+# Using alias
+scrubb f --dry
 ```
 
 **Options**:
 - `--dry`: Enable dry-run mode to preview changes without executing them
 - `--tree`: Display directory tree visualization before and after execution with comprehensive statistics
+- `--yes` or `-y`: Skip confirmation prompt and proceed automatically (use with caution)
+- `--verbose` or `-v`: Display detailed debug information including file-by-file processing
+- `--quiet` or `-q`: Suppress all non-essential output, showing only errors
 
 **Interactive Workflow (Regular Mode)**:
 1. System prompts: "Enter the directory path to clean up:"
 2. User provides a directory path (absolute, relative, or with tilde expansion)
 3. System validates the path exists and is a directory
 4. System recursively scans all files in the directory tree
-5. Files are categorized by extension and moved to organized folders
-6. Empty directories are automatically removed
-7. Statistics are displayed
+5. System displays a summary of planned operations
+6. **System prompts for confirmation**: "Proceed with folder cleanup? (yes/no)"
+7. User confirms (yes/y/Y/YES or Enter) or cancels (no/n/N/NO)
+8. If confirmed: Files are categorized by extension and moved to organized folders
+9. Empty directories are automatically removed
+10. Statistics are displayed
+
+**Note**: Use `--yes` or `-y` flag to skip the confirmation prompt for automated workflows.
 
 **Interactive Workflow (Dry-Run Mode)**:
 1. System displays prominent dry-run mode indicator
@@ -130,44 +173,44 @@ Folder cleanup complete:
 DRY RUN PREVIEW - No changes will be made
 ======================================================================
 
-📊 SUMMARY
+ SUMMARY
   Files to move: 42
   Directories to create: 5
   Empty directories to remove: 7
   Files to skip: 3
   Potential conflicts: 2
 
-📁 FILES BY CATEGORY
+ FILES BY CATEGORY
   Development: 4 files
   Docs/Markdown: 8 files
   Docs/Other Docs: 12 files
   Images: 15 files
   Video: 3 files
 
-➕ DIRECTORIES TO CREATE
+ DIRECTORIES TO CREATE
   /path/to/dir/Scrubbed
   /path/to/dir/Scrubbed/Images
   /path/to/dir/Scrubbed/Video
   /path/to/dir/Scrubbed/Docs/Markdown
   /path/to/dir/Scrubbed/Development
 
-📦 FILE OPERATIONS
+ FILE OPERATIONS
   Images:
     photo.jpg → /path/to/dir/Scrubbed/Images/photo.jpg
     image.png → /path/to/dir/Scrubbed/Images/image.png
     ...
 
-⚠️  NAME CONFLICTS
+  NAME CONFLICTS
   report.pdf → report_1.pdf
     Category: Docs/Other Docs
 
-⏭️  SKIPPED FILES
+⏭  SKIPPED FILES
   /path/to/dir/unknown.xyz - Unknown extension
 
-🗑️  EMPTY DIRECTORIES TO REMOVE
+  EMPTY DIRECTORIES TO REMOVE
   /path/to/dir/nested/empty
 
-✅ No potential errors detected
+ No potential errors detected
 
 ======================================================================
 This was a DRY RUN - No files were moved or modified
@@ -210,19 +253,19 @@ scrubb folder --tree --dry
 The tree visualization uses professional box-drawing characters and color-coded file types for easy readability:
 
 ```
-═══════════════════════════════════════════════════════════════
-BEFORE - Directory Structure
-═══════════════════════════════════════════════════════════════
-/path/to/directory
-├── photo.jpg
-├── video.mp4
-├── notes.md
-├── report.pdf
-├── script.py
-└── nested/
-    └── file.txt
 
-📊 Statistics:
+BEFORE - Directory Structure
+
+/path/to/directory
+ photo.jpg
+ video.mp4
+ notes.md
+ report.pdf
+ script.py
+ nested/
+     file.txt
+
+ Statistics:
   Files: 6
   Directories: 2
   Total Size: 2.4 MB
@@ -235,25 +278,25 @@ BEFORE - Directory Structure
     Docs/Other Docs: 2
     Development: 1
 
-═══════════════════════════════════════════════════════════════
-AFTER - Directory Structure
-═══════════════════════════════════════════════════════════════
-/path/to/directory
-└── Scrubbed/
-    ├── Images/
-    │   └── photo.jpg
-    ├── Video/
-    │   └── video.mp4
-    ├── Docs/
-    │   ├── Markdown/
-    │   │   └── notes.md
-    │   └── Other Docs/
-    │       ├── report.pdf
-    │       └── file.txt
-    └── Development/
-        └── script.py
 
-📊 Statistics:
+AFTER - Directory Structure
+
+/path/to/directory
+ Scrubbed/
+     Images/
+        photo.jpg
+     Video/
+        video.mp4
+     Docs/
+        Markdown/
+           notes.md
+        Other Docs/
+            report.pdf
+            file.txt
+     Development/
+         script.py
+
+ Statistics:
   Files: 6
   Directories: 8
   Total Size: 2.4 MB
@@ -266,9 +309,9 @@ AFTER - Directory Structure
     Docs/Other Docs: 2
     Development: 1
 
-═══════════════════════════════════════════════════════════════
+
 COMPARISON - Changes
-═══════════════════════════════════════════════════════════════
+
   Files: 0 (no change)
   Directories: +6
   Total Size: 0 B (no change)
@@ -351,13 +394,13 @@ Tree visualization is designed to be non-intrusive:
 
 ---
 
-### Main Command: `scrubb main`
+### Emoji Scrubbing Command: `scrubb emoji`
 
 **Purpose**: Remove emojis from text files and directories with comprehensive tracking.
 
 **Syntax**:
 ```bash
-scrubb main [PATH] [EXECUTOR]
+scrubb emoji [PATH] [EXECUTOR]
 ```
 
 **Parameters**:
@@ -368,18 +411,33 @@ scrubb main [PATH] [EXECUTOR]
   - Examples: `src`, `./docs`, `/home/user/projects`
 - `EXECUTOR` (required): Must be `.` to indicate recursive processing
 
+**Options**:
+- `--verbose` or `-v`: Display detailed debug information including file-by-file processing and timestamps
+- `--quiet` or `-q`: Suppress all non-essential output, showing only errors and warnings
+
 **Examples**:
 ```bash
 # Scrub from configured default root
-scrubb main .
+scrubb emoji .
 
 # Scrub a subdirectory under default root
-scrubb main src .
+scrubb emoji src .
 
 # Scrub an absolute or relative path
-scrubb main ./docs .
-scrubb main /home/user/projects .
+scrubb emoji ./docs .
+scrubb emoji /home/user/projects .
+
+# Using alias
+scrubb e .
+
+# With verbose output
+scrubb emoji . --verbose
+
+# Quiet mode (errors only)
+scrubb emoji . --quiet
 ```
+
+**Deprecation Notice**: The old `scrubb main` command is deprecated but still works with a warning. It will be removed in a future version. Please update your scripts to use `scrubb emoji` instead.
 
 **Output**: Displays comprehensive run statistics including:
 - Files processed, modified, skipped, and errors
@@ -406,7 +464,10 @@ scrubb stats [OPTIONS]
 
 **Options**:
 - `--top`: Show top 5 most frequently removed emoji tokens
-- `--reset`: Reset all persistent statistics to zero
+- `--reset`: Reset all persistent statistics to zero (requires confirmation)
+- `--yes` or `-y`: Skip confirmation prompt when using `--reset`
+- `--verbose` or `-v`: Display detailed statistics information
+- `--quiet` or `-q`: Suppress all non-essential output
 - `--help`: Show detailed help for this command
 
 **Examples**:
@@ -417,9 +478,21 @@ scrubb stats
 # Show top emoji tokens
 scrubb stats --top
 
-# Reset all statistics
+# Reset all statistics (prompts for confirmation)
 scrubb stats --reset
+
+# Reset without confirmation prompt
+scrubb stats --reset --yes
+
+# Using alias
+scrubb s --top
 ```
+
+**Confirmation Prompts**:
+- When using `--reset`, the system will prompt: "Are you sure you want to reset all statistics? (yes/no)"
+- Confirm with yes/y/Y/YES or Enter to proceed
+- Cancel with no/n/N/NO to abort
+- Use `--yes` or `-y` flag to skip the confirmation prompt for automated workflows
 
 **Output**: Displays persistent statistics including:
 - Total runs executed
@@ -447,6 +520,8 @@ scrubb config [OPTIONS]
 - `-p PATH`: Specify a path for configuration operations
 - `--show`: Show current configuration (default behavior)
 - `--edit`: Apply changes (requires `-p` flag)
+- `--verbose` or `-v`: Display detailed configuration information
+- `--quiet` or `-q`: Suppress all non-essential output
 - `--help`: Show detailed help for this command
 
 **Examples**:
@@ -462,6 +537,12 @@ scrubb config -p /path/to/code --edit
 
 # Set new default root with tilde expansion
 scrubb config -p ~/projects --edit
+
+# Using alias
+scrubb c --show
+
+# Verbose configuration display
+scrubb config --verbose
 ```
 
 **Configuration Display**: Shows:
@@ -502,7 +583,8 @@ scrubb --help
 
 **Syntax**:
 ```bash
-scrubb main --help
+scrubb emoji --help
+scrubb folder --help
 scrubb stats --help
 scrubb config --help
 ```
@@ -511,7 +593,71 @@ scrubb config --help
 - Detailed command syntax
 - Parameter descriptions
 - Option explanations
+- Available aliases
 - Usage examples
+
+---
+
+## Safety Features
+
+### Confirmation Prompts
+
+To prevent accidental data loss, scrubb prompts for confirmation before destructive operations:
+
+**Folder Cleanup Confirmation**:
+```bash
+# When running without --dry flag
+scrubb folder
+
+# System displays summary and prompts:
+Proceed with folder cleanup? (yes/no):
+```
+
+**Statistics Reset Confirmation**:
+```bash
+# When resetting statistics
+scrubb stats --reset
+
+# System prompts:
+Are you sure you want to reset all statistics? (yes/no):
+```
+
+**Accepting Confirmations**:
+- Type `yes`, `y`, `Y`, or `YES` to proceed
+- Press Enter to accept (if default is yes)
+- Type `no`, `n`, `N`, or `NO` to cancel
+
+**Bypassing Confirmations**:
+
+For automated workflows or when you're certain about the operation, use the `--yes` or `-y` flag:
+
+```bash
+# Skip folder cleanup confirmation
+scrubb folder --yes
+
+# Skip statistics reset confirmation
+scrubb stats --reset --yes
+
+# Using aliases with auto-confirm
+scrubb f -y
+scrubb s --reset -y
+```
+
+**Warning**: Use `--yes` with caution, especially in scripts, as it bypasses all safety prompts.
+
+### Dry-Run Mode
+
+The `--dry` flag for folder operations provides a safe preview:
+- Shows exactly what would happen without making changes
+- Identifies potential conflicts and errors
+- Allows verification before execution
+- No confirmation prompt needed (non-destructive)
+
+```bash
+# Always safe to run
+scrubb folder --dry
+scrubb f --dry --tree
+```
 
 ---
 
@@ -567,36 +713,57 @@ scrubb config
 **Regular Usage**:
 ```bash
 # Scrub current project
-scrubb main .
+scrubb emoji .
 
 # Scrub specific directory
-scrubb main src .
+scrubb emoji src .
+
+# Using aliases for faster typing
+scrubb e .              # Same as: scrubb emoji .
+scrubb e src .          # Same as: scrubb emoji src .
 
 # Preview folder cleanup (dry-run)
 scrubb folder --dry
+scrubb f --dry          # Using alias
 
-# Execute folder cleanup
+# Execute folder cleanup (with confirmation)
 scrubb folder
+scrubb f --yes          # Skip confirmation with alias
 
 # Check statistics
 scrubb stats
+scrubb s                # Using alias
 
 # View top emojis removed
 scrubb stats --top
+scrubb s --top          # Using alias
+
+# Verbose mode for detailed output
+scrubb emoji . --verbose
+scrubb folder --dry -v
+
+# Quiet mode for minimal output
+scrubb emoji . --quiet
+scrubb stats -q
 ```
 
 **Maintenance**:
 ```bash
-# Reset statistics if needed
+# Reset statistics (with confirmation)
 scrubb stats --reset
+
+# Reset statistics without confirmation
+scrubb stats --reset --yes
+scrubb s --reset -y     # Using alias
 
 # Update default root
 scrubb config -p /new/path --edit
+scrubb c -p /new/path --edit  # Using alias
 ```
 
 ### Output Interpretation
 
-**Per-Run Output**:
+**Per-Run Output (Normal Mode)**:
 ```
 scrubb run: files_processed=42 modified=3 skipped=39 errors=0 emojis_removed=15
 
@@ -605,9 +772,24 @@ Modified files:
   [+] /path/to/file2.txt
 
 Emoji tokens removed:
-  #1: 8 codepoints
-  #2: 4 codepoints
-  #3: 3 codepoints
+   #1: 8 codepoints
+   #2: 4 codepoints
+   #3: 3 codepoints
+```
+
+**Per-Run Output (Verbose Mode)**:
+```
+[DEBUG] Processing file: /path/to/file1.md
+[DEBUG] Found emoji:  (U+1F600 - GRINNING FACE)
+[DEBUG] Removed 3 emojis from /path/to/file1.md
+[DEBUG] Processing file: /path/to/file2.txt
+...
+scrubb run: files_processed=42 modified=3 skipped=39 errors=0 emojis_removed=15
+```
+
+**Per-Run Output (Quiet Mode)**:
+```
+(Only errors and warnings are displayed)
 ```
 
 **Statistics Output**:

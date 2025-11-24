@@ -41,16 +41,16 @@ def main():
         if isinstance(hidden_files, list):
             for hidden in hidden_files:
                 (folder / hidden).write_text("hidden")
-                print(f"  📁 {folder_name}/")
-                print(f"     🔒 {hidden} (hidden)")
+                print(f"   {folder_name}/")
+                print(f"      {hidden} (hidden)")
         else:
             (folder / hidden_files).write_text("hidden")
-            print(f"  📁 {folder_name}/")
-            print(f"     🔒 {hidden_files} (hidden)")
+            print(f"   {folder_name}/")
+            print(f"      {hidden_files} (hidden)")
         
         # Create user file
         (folder / user_file).write_text("user content")
-        print(f"     📄 {user_file} (user file)")
+        print(f"      {user_file} (user file)")
         print()
     
     # Count before
@@ -69,7 +69,7 @@ def main():
     organizer = FolderOrganizer(test_dir, classifier, dry_run=False)
     stats = organizer.organize()
     
-    print(f"\n✅ Organization complete!")
+    print(f"\n Organization complete!")
     print(f"  Files moved: {stats.files_moved}")
     print(f"  Empty folders removed: {stats.empty_folders_removed}")
     print(f"  Errors: {stats.errors}")
@@ -102,14 +102,14 @@ def main():
             leftover_empty.append(d)
     
     if leftover_empty:
-        print(f"❌ Found {len(leftover_empty)} empty directories:")
+        print(f" Found {len(leftover_empty)} empty directories:")
         for d in leftover_empty:
             print(f"  - {d.relative_to(test_dir)}")
     else:
-        print("✅ No empty directories left behind!")
+        print(" No empty directories left behind!")
         print("\nAll folders containing only hidden/system files were successfully removed:")
         for folder_name, _, _ in scenarios:
-            print(f"  ✓ {folder_name}/")
+            print(f"   {folder_name}/")
     
     print()
     print("=" * 70)

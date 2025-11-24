@@ -348,36 +348,36 @@ Fixes #38
 
 ```
 scrubb/
-├── scrubb/                 # Main package
-│   ├── __init__.py
-│   ├── cli.py             # CLI commands and interface
-│   ├── config.py          # Configuration management
-│   ├── scrubber.py        # Emoji scrubbing logic
-│   ├── ignore.py          # File filtering
-│   ├── file_classifier.py # File type classification
-│   ├── folder_organizer.py # Folder cleanup logic
-│   ├── directory_scanner.py # Directory traversal
-│   ├── tree_visualizer.py  # Tree visualization
-│   ├── tree_renderer.py    # Tree rendering
-│   ├── tree_comparator.py  # Tree comparison
-│   ├── statistics_calculator.py # Statistics
-│   └── tree_models.py      # Data models
-├── tests/                  # Test suite
-│   ├── test_cli.py
-│   ├── test_scrubber.py
-│   ├── test_folder_organizer.py
-│   └── ...
-├── docs/                   # Documentation
-│   ├── COMMAND_REFERENCE.md
-│   ├── ARCHITECTURE.md
-│   └── dev/
-│       ├── CONTRIBUTING.md
-│       └── ...
-├── examples/               # Example scripts
-├── scripts/                # Utility scripts
-├── pyproject.toml         # Project configuration
-├── README.md              # Main documentation
-└── CHANGELOG.md           # Version history
+ scrubb/                 # Main package
+    __init__.py
+    cli.py             # CLI commands and interface
+    config.py          # Configuration management
+    scrubber.py        # Emoji scrubbing logic
+    ignore.py          # File filtering
+    file_classifier.py # File type classification
+    folder_organizer.py # Folder cleanup logic
+    directory_scanner.py # Directory traversal
+    tree_visualizer.py  # Tree visualization
+    tree_renderer.py    # Tree rendering
+    tree_comparator.py  # Tree comparison
+    statistics_calculator.py # Statistics
+    tree_models.py      # Data models
+ tests/                  # Test suite
+    test_cli.py
+    test_scrubber.py
+    test_folder_organizer.py
+    ...
+ docs/                   # Documentation
+    COMMAND_REFERENCE.md
+    ARCHITECTURE.md
+    dev/
+        CONTRIBUTING.md
+        ...
+ examples/               # Example scripts
+ scripts/                # Utility scripts
+ pyproject.toml         # Project configuration
+ README.md              # Main documentation
+ CHANGELOG.md           # Version history
 ```
 
 ## Adding New Features

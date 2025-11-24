@@ -32,11 +32,11 @@ The reorganization follows a simple file system operation pattern:
 
 ```
 Reorganization System
-├── File Analyzer - Identifies files and their target locations
-├── Content Validator - Verifies file content and links
-├── File Mover - Performs safe file operations
-├── Link Updater - Updates documentation references
-└── Verification Runner - Validates final state
+ File Analyzer - Identifies files and their target locations
+ Content Validator - Verifies file content and links
+ File Mover - Performs safe file operations
+ Link Updater - Updates documentation references
+ Verification Runner - Validates final state
 ```
 
 ## Components and Interfaces

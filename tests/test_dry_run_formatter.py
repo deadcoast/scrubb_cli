@@ -50,14 +50,14 @@ class TestDryRunFormatter:
         
         # Check for all required sections
         assert "DRY RUN PREVIEW" in output
-        assert "📊 SUMMARY" in output
-        assert "📁 FILES BY CATEGORY" in output
-        assert "➕ DIRECTORIES TO CREATE" in output
-        assert "📦 FILE OPERATIONS" in output
-        assert "⚠️  NAME CONFLICTS" in output
-        assert "⏭️  SKIPPED FILES" in output
-        assert "🗑️  EMPTY DIRECTORIES TO REMOVE" in output
-        assert "❌ POTENTIAL ERRORS" in output
+        assert " SUMMARY" in output
+        assert " FILES BY CATEGORY" in output
+        assert " DIRECTORIES TO CREATE" in output
+        assert " FILE OPERATIONS" in output
+        assert "  NAME CONFLICTS" in output
+        assert "⏭  SKIPPED FILES" in output
+        assert "  EMPTY DIRECTORIES TO REMOVE" in output
+        assert " POTENTIAL ERRORS" in output
         assert "This was a DRY RUN" in output
     
     def test_formatting_of_file_operations(self):
@@ -112,7 +112,7 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Check conflicts are listed
-        assert "⚠️  NAME CONFLICTS" in output
+        assert "  NAME CONFLICTS" in output
         assert "document.txt → document_1.txt" in output
         assert "image.jpg → image_1.jpg" in output
         assert "Category: Docs" in output
@@ -130,7 +130,7 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Check skipped files are listed
-        assert "⏭️  SKIPPED FILES" in output
+        assert "⏭  SKIPPED FILES" in output
         assert "unknown1.xyz" in output
         assert "unknown2.abc" in output
         assert "Unknown extension" in output
@@ -147,7 +147,7 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Check potential errors are listed
-        assert "❌ POTENTIAL ERRORS" in output
+        assert " POTENTIAL ERRORS" in output
         assert "Permission denied: /root/locked.txt" in output
         assert "Error accessing /root/missing.txt" in output
     
@@ -168,7 +168,7 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Conflicts section should not appear
-        assert "⚠️  NAME CONFLICTS" not in output
+        assert "  NAME CONFLICTS" not in output
     
     def test_edge_case_no_errors(self):
         """Test output when there are no potential errors."""
@@ -180,8 +180,8 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Should show "No potential errors detected"
-        assert "✅ No potential errors detected" in output
-        assert "❌ POTENTIAL ERRORS" not in output
+        assert " No potential errors detected" in output
+        assert " POTENTIAL ERRORS" not in output
     
     def test_edge_case_no_skipped_files(self):
         """Test output when there are no skipped files."""
@@ -193,7 +193,7 @@ class TestDryRunFormatter:
         output = DryRunFormatter.format_output(stats, Path("/root"))
         
         # Skipped files section should not appear
-        assert "⏭️  SKIPPED FILES" not in output
+        assert "⏭  SKIPPED FILES" not in output
     
     def test_edge_case_empty_stats(self):
         """Test output with completely empty stats."""
@@ -203,10 +203,10 @@ class TestDryRunFormatter:
         
         # Should still have header, summary, and footer
         assert "DRY RUN PREVIEW" in output
-        assert "📊 SUMMARY" in output
+        assert " SUMMARY" in output
         assert "Files to move: 0" in output
         assert "This was a DRY RUN" in output
-        assert "✅ No potential errors detected" in output
+        assert " No potential errors detected" in output
     
     def test_summary_statistics_accuracy(self):
         """Test that summary statistics are accurately displayed."""

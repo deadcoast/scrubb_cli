@@ -160,7 +160,8 @@ class TestClassificationConsistency:
                 file_extensions()
             ),
             min_size=1,
-            max_size=15
+            max_size=15,
+            unique_by=lambda x: f"{x[0]}{x[1]}".lower()  # Ensure case-insensitive uniqueness for Windows
         )
     )
     def test_classification_consistency(self, filenames):
@@ -404,7 +405,7 @@ class TestCompleteFileOperationReporting:
             
             # Verify file operations section exists if there are operations
             if stats.file_operations:
-                assert "📦 FILE OPERATIONS" in output, \
+                assert " FILE OPERATIONS" in output, \
                     "FILE OPERATIONS section missing from output"
             
             # Verify all files are accounted for (either moved or skipped)
@@ -518,7 +519,7 @@ class TestConflictDetectionAndReporting:
             
             # Verify conflicts are detected
             if len(stats.conflicts) > 0:
-                assert "⚠️  NAME CONFLICTS" in output, \
+                assert "  NAME CONFLICTS" in output, \
                     "NAME CONFLICTS section missing when conflicts exist"
                 
                 # Verify each conflict is reported
@@ -573,7 +574,7 @@ class TestDirectoryCreationReporting:
             
             # Verify directories to create section exists if there are directories
             if stats.directories_to_create:
-                assert "➕ DIRECTORIES TO CREATE" in output, \
+                assert " DIRECTORIES TO CREATE" in output, \
                     "DIRECTORIES TO CREATE section missing"
                 
                 # Verify each directory is listed
@@ -626,7 +627,7 @@ class TestSkippedFileReporting:
             
             # Verify skipped files section exists
             if stats.skipped_files:
-                assert "⏭️  SKIPPED FILES" in output, \
+                assert "⏭  SKIPPED FILES" in output, \
                     "SKIPPED FILES section missing"
                 
                 # Verify each skipped file is listed
@@ -682,7 +683,7 @@ class TestPotentialErrorDetection:
             
             # Verify potential errors section or no errors message
             if stats.potential_errors:
-                assert "❌ POTENTIAL ERRORS" in output, \
+                assert " POTENTIAL ERRORS" in output, \
                     "POTENTIAL ERRORS section missing when errors exist"
                 
                 # Verify each error is listed
@@ -690,7 +691,7 @@ class TestPotentialErrorDetection:
                     assert error in output, \
                         f"Error '{error}' not in output"
             else:
-                assert "✅ No potential errors detected" in output, \
+                assert " No potential errors detected" in output, \
                     "No errors message missing when no errors detected"
 
 
@@ -727,7 +728,7 @@ class TestOutputOrganization:
             # Verify required sections are present
             required_sections = [
                 "DRY RUN PREVIEW",
-                "📊 SUMMARY",
+                " SUMMARY",
                 "This was a DRY RUN"
             ]
             
@@ -745,7 +746,7 @@ class TestOutputOrganization:
             
             # Verify consistent formatting
             # All section headers should use emoji or clear markers
-            section_markers = ["📊", "📁", "➕", "📦", "⚠️", "⏭️", "🗑️", "❌", "✅"]
+            section_markers = ["", "", "", "", "", "⏭", "", "", ""]
             found_markers = [marker for marker in section_markers if marker in output]
             
             # At least some section markers should be present

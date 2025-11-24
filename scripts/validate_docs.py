@@ -45,7 +45,7 @@ def validate_command_syntax(commands: List[str]) -> List[str]:
     for cmd in commands:
         # Check for deprecated --folder syntax (should be 'folder' subcommand)
         if '--folder' in cmd and 'scrubb --folder' in cmd:
-            errors.append(f"❌ Deprecated syntax: '{cmd}' (should be 'scrubb folder')")
+            errors.append(f" Deprecated syntax: '{cmd}' (should be 'scrubb folder')")
     
     return errors
 
@@ -106,18 +106,18 @@ def validate_file_extensions() -> List[str]:
                     missing = actual_exts - documented_exts
                     if missing:
                         errors.append(
-                            f"⚠️  {category}: Missing from docs: {', '.join(sorted(missing))}"
+                            f"  {category}: Missing from docs: {', '.join(sorted(missing))}"
                         )
                     
                     # Check for extra extensions in docs
                     extra = documented_exts - actual_exts
                     if extra:
                         errors.append(
-                            f"❌ {category}: In docs but not in code: {', '.join(sorted(extra))}"
+                            f" {category}: In docs but not in code: {', '.join(sorted(extra))}"
                         )
     
     except ImportError as e:
-        errors.append(f"⚠️  Could not import FileClassifier: {e}")
+        errors.append(f"  Could not import FileClassifier: {e}")
     
     return errors
 
@@ -128,7 +128,7 @@ def validate_help_text() -> List[str]:
     
     # This would require running the CLI and capturing help output
     # For now, we'll just note it as a manual check
-    errors.append("ℹ️  Manual check required: Verify help text matches CLI output")
+    errors.append("ℹ  Manual check required: Verify help text matches CLI output")
     
     return errors
 
@@ -148,7 +148,7 @@ def main():
     all_errors = []
     
     # Check 1: Command Syntax
-    print("\n📋 Checking command syntax...")
+    print("\n Checking command syntax...")
     for doc in docs:
         if doc.exists():
             print(f"  Checking {doc.name}...")
@@ -160,32 +160,32 @@ def main():
                     print(f"    {error}")
                 all_errors.extend(errors)
             else:
-                print(f"    ✅ No syntax issues found")
+                print(f"     No syntax issues found")
     
     # Check 2: File Extensions
-    print("\n📁 Checking file extension documentation...")
+    print("\n Checking file extension documentation...")
     ext_errors = validate_file_extensions()
     if ext_errors:
         for error in ext_errors:
             print(f"  {error}")
         all_errors.extend(ext_errors)
     else:
-        print("  ✅ File extensions match code")
+        print("   File extensions match code")
     
     # Summary
     print("\n" + "=" * 70)
-    error_count = len([e for e in all_errors if e.startswith('❌')])
-    warning_count = len([e for e in all_errors if e.startswith('⚠️')])
-    info_count = len([e for e in all_errors if e.startswith('ℹ️')])
+    error_count = len([e for e in all_errors if e.startswith('')])
+    warning_count = len([e for e in all_errors if e.startswith('')])
+    info_count = len([e for e in all_errors if e.startswith('ℹ')])
     
     if error_count > 0:
-        print(f"❌ Validation FAILED: {error_count} errors, {warning_count} warnings")
+        print(f" Validation FAILED: {error_count} errors, {warning_count} warnings")
         return 1
     elif warning_count > 0:
-        print(f"⚠️  Validation passed with {warning_count} warnings")
+        print(f"  Validation passed with {warning_count} warnings")
         return 0
     else:
-        print("✅ All documentation validated successfully!")
+        print(" All documentation validated successfully!")
         return 0
 
 
