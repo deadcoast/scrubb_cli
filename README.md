@@ -28,13 +28,45 @@
 
 ## Installation
 
+This project uses the [UV](https://docs.astral.sh/uv/) ecosystem for fast, reliable Python package management.
+
+### Installing UV
+
+If you don't have UV installed yet:
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Alternative (using pip):**
+```bash
+pip install uv
+```
+
+For more installation options, see the [UV installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+
+### Installing scrubb
+
 From the project directory:
 
 ```bash
-pip install .
-# or using pipx for isolated installation
-pipx install .
+# Install in development mode (recommended for development)
+uv pip install -e .
+
+# Or install normally
+uv pip install .
+
+# Or use uvx to run without installing (requires UV 0.4.0+)
+uvx --from . scrubb --help
 ```
+
+**Note**: UV automatically manages virtual environments and dependencies, making installation faster and more reliable than traditional pip.
 
 ## Quick Start
 
@@ -284,7 +316,45 @@ scrubb/
 ## Requirements
 
 - Python 3.10+
+- UV (for package management)
 - typer >= 0.12.3
+
+## Development
+
+### Setting Up Development Environment
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd scrubb
+
+# Install in development mode with UV
+uv pip install -e .
+
+# Run tests
+uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=scrubb --cov-report=html
+```
+
+### Running Tests
+
+The project includes comprehensive test coverage with both unit tests and property-based tests:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_cli.py
+
+# Run tests matching a pattern
+uv run pytest -k "dry_run"
+```
 
 ## How It Works
 
