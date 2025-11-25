@@ -18,34 +18,34 @@ scrubb is designed as a modular, command-line application with clear separation 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        CLI Layer                             │
-│                        (cli.py)                              │
-│  - Command parsing and routing                               │
-│  - User input/output                                         │
-│  - Error handling and display                                │
+│                        CLI Layer                            │
+│                        (cli.py)                             │
+│  - Command parsing and routing                              │
+│  - User input/output                                        │
+│  - Error handling and display                               │
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Business Logic Layer                      │
+│                    Business Logic Layer                     │
 ├─────────────────────────────────────────────────────────────┤
-│  Emoji Scrubbing          │  Folder Cleanup                  │
-│  - scrubber.py            │  - folder_organizer.py           │
-│  - ignore.py              │  - file_classifier.py            │
-│                           │  - directory_scanner.py          │
-│                           │  - tree_visualizer.py            │
-│                           │  - tree_renderer.py              │
-│                           │  - tree_comparator.py            │
-│                           │  - statistics_calculator.py      │
+│  Emoji Scrubbing          │  Folder Cleanup                 │
+│  - scrubber.py            │  - folder_organizer.py          │
+│  - ignore.py              │  - file_classifier.py           │
+│                           │  - directory_scanner.py         │
+│                           │  - tree_visualizer.py           │
+│                           │  - tree_renderer.py             │
+│                           │  - tree_comparator.py           │
+│                           │  - statistics_calculator.py     │
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Infrastructure Layer                       │
-│  - config.py (Configuration & XDG paths)                     │
-│  - tree_models.py (Data models)                              │
-│  - File system operations                                    │
-│  - Statistics persistence                                    │
+│                   Infrastructure Layer                      │
+│  - config.py (Configuration & XDG paths)                    │
+│  - tree_models.py (Data models)                             │
+│  - File system operations                                   │
+│  - Statistics persistence                                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
