@@ -440,12 +440,6 @@ def test_empty_directory_removal(empty_dir_count, file_count):
                 file_path = empty_dir / f"file_{j}.txt"
                 file_path.touch()
         
-        # Create a directory that should stay (not empty)
-        non_empty_dir = root / "stays_full"
-        non_empty_dir.mkdir()
-        # Put a file with unknown extension that won't be moved
-        (non_empty_dir / "stays.unknown").touch()
-        
         # Organize files
         organizer.organize()
         
@@ -458,9 +452,6 @@ def test_empty_directory_removal(empty_dir_count, file_count):
         
         # Verify Scrubbed folder still exists
         assert organizer.scrubbed_path.exists()
-        
-        # Verify non-empty directory still exists
-        assert non_empty_dir.exists()
 
 
 
@@ -518,3 +509,156 @@ def test_recursive_empty_directory_removal(depth, branches):
         
         # Verify Scrubbed folder still exists
         assert organizer.scrubbed_path.exists()
+
+
+@settings(max_examples=100)
+@given(
+    file_count=st.integers(min_value=1, max_value=20),
+    extensions=st.lists(
+        st.sampled_from([
+            ".jpg", ".png", ".gif",  # Images
+            ".mp4", ".avi", ".mov",  # Video
+            ".md", ".markdown",  # Markdown
+            ".pdf", ".txt", ".docx",  # Documents
+            ".py", ".js", ".html",  # Development
+            ".xyz", ".abc", ".unknown"  # Unknown extensions
+        ]),
+        min_size=1,
+        max_size=20
+    )
+)
+def test_complete_file_coverage(file_count, extensions):
+    """
+    **Feature: unknown-file-handling, Property 1: Complete file coverage**
+    **Validates: Requirements 1.1, 1.4, 3.3**
+    
+    For any directory containing files, after organization completes, the number
+    of files in categorized folders plus files that failed to move SHALL equal
+    the total number of files discovered during scanning.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        classifier = FileClassifier()
+        organizer = FolderOrganizer(root, classifier, dry_run=False)
+        
+        # Create files with various extensions
+        created_files = []
+        for i in range(file_count):
+            ext = extensions[i % len(extensions)]
+            file_path = root / f"file_{i}{ext}"
+            file_path.write_text(f"content {i}")
+            created_files.append(file_path)
+        
+        # Record the number of files discovered
+        files_discovered = organizer._scan_files()
+        total_files_discovered = len(files_discovered)
+        
+        # Organize files
+        stats = organizer.organize()
+        
+        # Verify: files_moved + errors == total_files_discovered
+        total_accounted = stats.files_moved + stats.errors
+        
+        assert total_accounted == total_files_discovered, \
+            f"File coverage mismatch: {stats.files_moved} moved + {stats.errors} errors = {total_accounted}, but {total_files_discovered} files were discovered"
+        
+        # Additional verification: count actual files in Scrubbed folder (recursively)
+        files_in_scrubbed = []
+        if organizer.scrubbed_path.exists():
+            for item in organizer.scrubbed_path.rglob("*"):
+                if item.is_file():
+                    files_in_scrubbed.append(item)
+        
+        # The number of files in Scrubbed should equal files_moved
+        assert len(files_in_scrubbed) == stats.files_moved, \
+            f"Files in Scrubbed folder ({len(files_in_scrubbed)}) doesn't match files_moved ({stats.files_moved})"
+
+
+
+@settings(max_examples=100)
+@given(
+    # Generate a random subset of categories (at least 1, at most all 6)
+    categories_with_files=st.lists(
+        st.sampled_from([
+            FileCategory.IMAGE,
+            FileCategory.VIDEO,
+            FileCategory.MARKDOWN,
+            FileCategory.DOCUMENT,
+            FileCategory.DEVELOPMENT,
+            FileCategory.OTHER
+        ]),
+        min_size=1,
+        max_size=6,
+        unique=True
+    ),
+    files_per_category=st.integers(min_value=1, max_value=5)
+)
+def test_category_folder_creation_property(categories_with_files, files_per_category):
+    """
+    **Feature: unknown-file-handling, Property 6: Category folder creation**
+    **Validates: Requirements 1.2, 3.4**
+    
+    For any file category with at least one file to move, the system SHALL create
+    the corresponding category folder in the Scrubbed directory.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        classifier = FileClassifier()
+        organizer = FolderOrganizer(root, classifier, dry_run=False)
+        
+        # Map categories to extensions
+        category_to_ext = {
+            FileCategory.IMAGE: ".jpg",
+            FileCategory.VIDEO: ".mp4",
+            FileCategory.MARKDOWN: ".md",
+            FileCategory.DOCUMENT: ".pdf",
+            FileCategory.DEVELOPMENT: ".py",
+            FileCategory.OTHER: ".xyz"  # Unknown extension
+        }
+        
+        # Create files for each selected category
+        created_categories = set()
+        for category in categories_with_files:
+            ext = category_to_ext[category]
+            for i in range(files_per_category):
+                file_path = root / f"file_{category.name}_{i}{ext}"
+                file_path.write_text(f"content for {category.name}")
+            created_categories.add(category)
+        
+        # Organize files
+        stats = organizer.organize()
+        
+        # Verify: For each category with files, the corresponding folder was created
+        for category in created_categories:
+            category_dir = organizer.scrubbed_path / category.value
+            
+            assert category_dir.exists(), \
+                f"Category folder '{category.value}' should exist for category {category.name}"
+            
+            assert category_dir.is_dir(), \
+                f"'{category.value}' should be a directory, not a file"
+            
+            # Verify files were actually moved to this category folder
+            files_in_category = list(category_dir.glob("*"))
+            assert len(files_in_category) >= files_per_category, \
+                f"Category folder '{category.value}' should contain at least {files_per_category} files, found {len(files_in_category)}"
+        
+        # Additional verification: No extra category folders should be created
+        # (only folders for categories that have files)
+        all_category_folders = [item for item in organizer.scrubbed_path.iterdir() if item.is_dir()]
+        
+        # Extract just the folder names
+        created_folder_names = {folder.name for folder in all_category_folders}
+        expected_folder_names = {category.value for category in created_categories}
+        
+        # Handle nested paths (e.g., "Docs/Markdown" creates "Docs" folder)
+        # Extract top-level folder names from expected categories
+        expected_top_level = set()
+        for cat_value in expected_folder_names:
+            top_level = cat_value.split('/')[0]
+            expected_top_level.add(top_level)
+        
+        # Verify all created folders correspond to categories with files
+        for folder_name in created_folder_names:
+            assert folder_name in expected_top_level, \
+                f"Unexpected folder '{folder_name}' created in Scrubbed directory"

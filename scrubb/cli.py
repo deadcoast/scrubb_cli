@@ -449,13 +449,17 @@ def folder(
     classifier = FileClassifier()
     organizer = FolderOrganizer(target_path, classifier, dry_run=dry)
     
-    # Tree visualization if enabled
+    # Tree visualization if enabled (Requirements 9.1 - trees display before standard output)
     if tree:
         # Use SimpleTreeRenderer if rich is unavailable
         renderer = TreeRenderer() if RICH_AVAILABLE else SimpleTreeRenderer()
         visualizer = TreeVisualizer(target_path, renderer)
         before_snapshot = visualizer.capture_before_state()
         visualizer.render_before_tree(before_snapshot)
+    
+    # Log target directory after tree visualization (Requirements 4.1, 9.1)
+    if verbosity_manager.should_print_info():
+        typer.echo(f"Target directory: {target_path}")
     
     # Confirmation prompt for destructive operation (unless --dry or --yes is provided)
     if not dry and not yes:
@@ -471,8 +475,6 @@ def folder(
             raise typer.Exit(code=130)
     
     # Execute organization
-    if verbosity_manager.should_print_info():
-        typer.echo(f"Organizing files in: {target_path}")
     stats = organizer.organize()
     
     # Tree visualization after execution

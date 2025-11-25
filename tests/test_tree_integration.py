@@ -312,14 +312,14 @@ def test_output_ordering():
             before_pos = output.find("BEFORE")
             after_pos = output.find("AFTER")
             comparison_pos = output.find("COMPARISON") if "COMPARISON" in output else output.find("Files:")
-            organizing_pos = output.find("Organizing files in:")
+            target_dir_pos = output.find("Target directory:")
             cleanup_pos = output.find("Folder cleanup complete!")
             
             # Verify all sections are present
             assert before_pos != -1, "BEFORE section not found"
             assert after_pos != -1, "AFTER section not found"
             assert comparison_pos != -1, "Comparison section not found"
-            assert organizing_pos != -1, "Organizing message not found"
+            assert target_dir_pos != -1, f"Target directory message not found. Output:\n{output}"
             assert cleanup_pos != -1, "Cleanup complete message not found"
             
             # Verify ordering: BEFORE < AFTER < COMPARISON < standard output
@@ -327,8 +327,8 @@ def test_output_ordering():
             assert after_pos < comparison_pos, "AFTER should come before COMPARISON"
             assert comparison_pos < cleanup_pos, "COMPARISON should come before cleanup message"
             
-            # Verify organizing message comes after BEFORE (trees display first)
-            assert before_pos < organizing_pos, "Trees should display before organizing message"
+            # Verify target directory message comes after BEFORE (trees display first)
+            assert before_pos < target_dir_pos, "Trees should display before target directory message"
 
 
 def test_output_ordering_dry_run():

@@ -63,13 +63,13 @@ class TestFileClassifier:
         """Test handling of files with no extension."""
         no_extension_files = ["README", "Makefile", "LICENSE"]
         for filename in no_extension_files:
-            assert classifier.classify(Path(filename)) == FileCategory.UNKNOWN
+            assert classifier.classify(Path(filename)) == FileCategory.OTHER
     
     def test_classify_unrecognized_extension(self, classifier):
         """Test handling of files with unrecognized extensions."""
         unknown_files = ["file.xyz", "data.unknown", "archive.rar"]
         for filename in unknown_files:
-            assert classifier.classify(Path(filename)) == FileCategory.UNKNOWN
+            assert classifier.classify(Path(filename)) == FileCategory.OTHER
     
     def test_case_insensitive_matching(self, classifier):
         """Test that extension matching is case-insensitive."""

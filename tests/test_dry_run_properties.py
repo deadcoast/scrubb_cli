@@ -850,3 +850,283 @@ class TestDryRunPredictionAccuracy:
                 actual_dir = actual_root / relative_dir
                 assert not actual_dir.exists(), \
                     f"Predicted empty directory {relative_dir} was not removed in actual execution"
+
+
+
+class TestNoFilesSkippedForUnknownExtensions:
+    """Property tests for ensuring unknown extension files are not skipped."""
+    
+    @settings(max_examples=100)
+    @given(
+        num_unknown=st.integers(min_value=1, max_value=10),
+        num_known=st.integers(min_value=0, max_value=10)
+    )
+    def test_no_files_skipped_for_unknown_extensions(self, num_unknown, num_known):
+        """
+        **Feature: unknown-file-handling, Property 3: No files skipped for unknown extensions**
+        **Validates: Requirements 1.3, 1.4**
+        
+        For any file classified as FileCategory.OTHER, the FolderOrganizer SHALL
+        include it in file operations and SHALL NOT add it to the skipped files list.
+        """
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root_path = Path(temp_dir)
+            
+            # Create files with unknown extensions
+            unknown_files = []
+            for i in range(num_unknown):
+                filename = f"unknown_{i}.xyz"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                unknown_files.append(filename)
+            
+            # Create files with known extensions
+            known_extensions = [".txt", ".jpg", ".py", ".md", ".pdf"]
+            known_files = []
+            for i in range(num_known):
+                ext = known_extensions[i % len(known_extensions)]
+                filename = f"known_{i}{ext}"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                known_files.append(filename)
+            
+            # Run dry-run mode
+            classifier = FileClassifier()
+            organizer = FolderOrganizer(root_path, classifier, dry_run=True)
+            stats = organizer.organize()
+            
+            # Verify no files with unknown extensions are in skipped_files
+            skipped_filenames = [skipped.path.name for skipped in stats.skipped_files]
+            for unknown_file in unknown_files:
+                assert unknown_file not in skipped_filenames, \
+                    f"File with unknown extension {unknown_file} should not be skipped"
+            
+            # Verify all unknown extension files are in file_operations
+            operation_filenames = [op.source.name for op in stats.file_operations]
+            for unknown_file in unknown_files:
+                assert unknown_file in operation_filenames, \
+                    f"File with unknown extension {unknown_file} should be in file operations"
+            
+            # Verify unknown extension files are categorized as OTHER
+            for op in stats.file_operations:
+                if op.source.name in unknown_files:
+                    assert op.category == FileCategory.OTHER, \
+                        f"File {op.source.name} should be categorized as OTHER, got {op.category}"
+            
+            # Verify "Other" category appears in statistics if unknown files exist
+            if num_unknown > 0:
+                assert "Other" in stats.files_by_category, \
+                    "Other category should appear in statistics when unknown files exist"
+                assert stats.files_by_category["Other"] == num_unknown, \
+                    f"Other category count should be {num_unknown}, got {stats.files_by_category.get('Other', 0)}"
+            
+            # Verify total files to move includes unknown extension files
+            total_files = num_unknown + num_known
+            assert stats.files_to_move == total_files, \
+                f"Total files to move should be {total_files}, got {stats.files_to_move}"
+
+
+class TestDryRunConsistency:
+    """Property tests for dry-run consistency with actual mode."""
+    
+    @settings(max_examples=100)
+    @given(structure=directory_structure())
+    def test_dry_run_consistency(self, structure):
+        """
+        **Feature: unknown-file-handling, Property 5: Dry-run consistency**
+        **Validates: Requirements 1.3, 2.1**
+        
+        For any directory, running in dry-run mode SHALL produce statistics that
+        match what would happen in actual mode, including OTHER category files.
+        """
+        # Create two temporary directories - one for dry-run, one for actual
+        with tempfile.TemporaryDirectory() as temp_dir1, \
+             tempfile.TemporaryDirectory() as temp_dir2:
+            
+            dry_run_root = Path(temp_dir1)
+            actual_root = Path(temp_dir2)
+            
+            # Create identical test structures in both directories
+            create_test_structure(dry_run_root, structure)
+            create_test_structure(actual_root, structure)
+            
+            # Run dry-run mode to capture predictions
+            classifier = FileClassifier()
+            dry_organizer = FolderOrganizer(dry_run_root, classifier, dry_run=True)
+            dry_stats = dry_organizer.organize()
+            
+            # Run actual mode on the copy
+            actual_organizer = FolderOrganizer(actual_root, classifier, dry_run=False)
+            actual_stats = actual_organizer.organize()
+            
+            # Verify files_to_move matches files_moved (accounting for errors)
+            # In ideal case with no errors, they should match exactly
+            if actual_stats.errors == 0:
+                assert dry_stats.files_to_move == actual_stats.files_moved, \
+                    f"File count mismatch: dry-run predicted {dry_stats.files_to_move}, " \
+                    f"actual moved {actual_stats.files_moved}"
+            else:
+                # With errors, files_moved should be less than or equal to predicted
+                assert actual_stats.files_moved <= dry_stats.files_to_move, \
+                    f"Actual files moved ({actual_stats.files_moved}) should not exceed " \
+                    f"dry-run prediction ({dry_stats.files_to_move})"
+            
+            # Verify category counts match (including OTHER category)
+            for category, predicted_count in dry_stats.files_by_category.items():
+                actual_count = actual_stats.files_by_category.get(category, 0)
+                
+                # Account for potential errors in actual execution
+                if actual_stats.errors == 0:
+                    assert predicted_count == actual_count, \
+                        f"Category '{category}' count mismatch: " \
+                        f"dry-run predicted {predicted_count}, actual {actual_count}"
+                else:
+                    # With errors, actual count should be less than or equal to predicted
+                    assert actual_count <= predicted_count, \
+                        f"Category '{category}' actual count ({actual_count}) should not exceed " \
+                        f"dry-run prediction ({predicted_count})"
+            
+            # Verify all categories in actual mode were predicted in dry-run
+            for category in actual_stats.files_by_category.keys():
+                assert category in dry_stats.files_by_category, \
+                    f"Category '{category}' appeared in actual mode but was not predicted in dry-run"
+            
+            # Verify empty directories count matches
+            if actual_stats.errors == 0:
+                assert dry_stats.empty_folders_to_remove == actual_stats.empty_folders_removed, \
+                    f"Empty directory count mismatch: " \
+                    f"dry-run predicted {dry_stats.empty_folders_to_remove}, " \
+                    f"actual removed {actual_stats.empty_folders_removed}"
+            
+            # Verify that if OTHER category was predicted, it exists in actual results
+            if "Other" in dry_stats.files_by_category:
+                assert "Other" in actual_stats.files_by_category, \
+                    "OTHER category was predicted in dry-run but not found in actual results"
+                
+                # Verify OTHER folder was created
+                other_folder = actual_root / "Scrubbed" / "Other"
+                assert other_folder.exists(), \
+                    "OTHER folder should be created when OTHER category files are present"
+
+
+class TestStatisticsCompleteness:
+    """Property tests for statistics completeness with OTHER category."""
+    
+    @settings(max_examples=100)
+    @given(
+        num_unknown=st.integers(min_value=1, max_value=10),
+        num_known=st.integers(min_value=0, max_value=10)
+    )
+    def test_statistics_completeness_dry_run(self, num_unknown, num_known):
+        """
+        **Feature: unknown-file-handling, Property 4: Statistics completeness**
+        **Validates: Requirements 1.5, 2.2**
+        
+        For any organization operation (dry-run or actual), the statistics SHALL
+        include a count for the "Other" category if any files with unknown
+        extensions were processed.
+        """
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root_path = Path(temp_dir)
+            
+            # Create files with unknown extensions
+            unknown_files = []
+            for i in range(num_unknown):
+                filename = f"unknown_{i}.xyz"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                unknown_files.append(filename)
+            
+            # Create files with known extensions
+            known_extensions = [".txt", ".jpg", ".py", ".md", ".pdf"]
+            known_files = []
+            for i in range(num_known):
+                ext = known_extensions[i % len(known_extensions)]
+                filename = f"known_{i}{ext}"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                known_files.append(filename)
+            
+            # Run dry-run mode
+            classifier = FileClassifier()
+            organizer = FolderOrganizer(root_path, classifier, dry_run=True)
+            stats = organizer.organize()
+            
+            # Verify "Other" category appears in statistics
+            assert "Other" in stats.files_by_category, \
+                "Other category should appear in files_by_category when unknown files exist"
+            
+            # Verify count is correct
+            assert stats.files_by_category["Other"] == num_unknown, \
+                f"Other category count should be {num_unknown}, got {stats.files_by_category.get('Other', 0)}"
+            
+            # Verify total count is consistent
+            total_from_categories = sum(stats.files_by_category.values())
+            assert stats.files_to_move == total_from_categories, \
+                f"Total files to move ({stats.files_to_move}) should equal sum of categories ({total_from_categories})"
+    
+    @settings(max_examples=100)
+    @given(
+        num_unknown=st.integers(min_value=1, max_value=10),
+        num_known=st.integers(min_value=0, max_value=10)
+    )
+    def test_statistics_completeness_actual_mode(self, num_unknown, num_known):
+        """
+        **Feature: unknown-file-handling, Property 4: Statistics completeness**
+        **Validates: Requirements 1.5, 2.2**
+        
+        For any organization operation (dry-run or actual), the statistics SHALL
+        include a count for the "Other" category if any files with unknown
+        extensions were processed.
+        """
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root_path = Path(temp_dir)
+            
+            # Create files with unknown extensions
+            unknown_files = []
+            for i in range(num_unknown):
+                filename = f"unknown_{i}.xyz"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                unknown_files.append(filename)
+            
+            # Create files with known extensions
+            known_extensions = [".txt", ".jpg", ".py", ".md", ".pdf"]
+            known_files = []
+            for i in range(num_known):
+                ext = known_extensions[i % len(known_extensions)]
+                filename = f"known_{i}{ext}"
+                file_path = root_path / filename
+                file_path.write_text(f"Content {i}")
+                known_files.append(filename)
+            
+            # Run actual mode
+            classifier = FileClassifier()
+            organizer = FolderOrganizer(root_path, classifier, dry_run=False)
+            stats = organizer.organize()
+            
+            # Verify "Other" category appears in statistics
+            assert "Other" in stats.files_by_category, \
+                "Other category should appear in files_by_category when unknown files exist"
+            
+            # Verify count is correct
+            assert stats.files_by_category["Other"] == num_unknown, \
+                f"Other category count should be {num_unknown}, got {stats.files_by_category.get('Other', 0)}"
+            
+            # Verify total count is consistent
+            total_from_categories = sum(stats.files_by_category.values())
+            assert stats.files_moved == total_from_categories, \
+                f"Total files moved ({stats.files_moved}) should equal sum of categories ({total_from_categories})"
+            
+            # Verify "Other" folder was created
+            other_folder = root_path / "Scrubbed" / "Other"
+            assert other_folder.exists(), \
+                "Other folder should be created in Scrubbed directory"
+            
+            # Verify files were actually moved to Other folder
+            other_files = list(other_folder.glob("*"))
+            assert len(other_files) == num_unknown, \
+                f"Other folder should contain {num_unknown} files, found {len(other_files)}"

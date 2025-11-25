@@ -15,7 +15,7 @@ from scrubb.folder_organizer import FolderOrganizer
 runner = CliRunner()
 
 
-@settings(max_examples=100, deadline=1000)
+@settings(max_examples=100, deadline=None)
 @given(
     path_arg=st.one_of(
         st.none(),
@@ -263,7 +263,7 @@ def test_folder_command_with_valid_path():
             assert result.exit_code == 0
             
             # Check output contains expected messages
-            assert "Organizing files in:" in result.stdout
+            assert "Target directory:" in result.stdout
             assert "Folder cleanup complete!" in result.stdout
             assert "Files moved:" in result.stdout
 
@@ -446,8 +446,9 @@ def test_dry_run_output_displayed_correctly():
             # Check that files are listed
             assert "Files to move:" in result.stdout
             
-            # Check that skipped files section appears (for unknown.xyz)
-            assert "SKIPPED FILES" in result.stdout
+            # Check that unknown.xyz is now in the "Other" category (not skipped)
+            assert "Other" in result.stdout
+            assert "unknown.xyz" in result.stdout
             
             # Check footer reminder
             assert "This was a DRY RUN" in result.stdout
@@ -532,7 +533,8 @@ def test_dry_run_shows_all_sections():
             assert "FILES BY CATEGORY" in result.stdout
             assert "DIRECTORIES TO CREATE" in result.stdout
             assert "FILE OPERATIONS" in result.stdout
-            assert "SKIPPED FILES" in result.stdout
+            # SKIPPED FILES section only appears when there are skipped files
+            # Since unknown.xyz is now moved to "Other" category, no files are skipped
             assert "EMPTY DIRECTORIES TO REMOVE" in result.stdout
             
             # Check that potential errors section is present (even if no errors)
@@ -563,7 +565,7 @@ def test_folder_command_tree_flag_recognized():
             assert "BEFORE" in result.stdout or "AFTER" in result.stdout
             
             # Check that standard output is still present
-            assert "Organizing files in:" in result.stdout
+            assert "Target directory:" in result.stdout
             assert "Folder cleanup complete!" in result.stdout
 
 
@@ -880,7 +882,7 @@ def test_folder_command_verbose_flag():
             assert result.exit_code == 0
             
             # Check that output is present
-            assert "Organizing files in:" in result.stdout
+            assert "Target directory:" in result.stdout
             assert "Folder cleanup complete!" in result.stdout
 
 

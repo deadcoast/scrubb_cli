@@ -11,7 +11,8 @@ class FileCategory(Enum):
     MARKDOWN = "Docs/Markdown"
     DOCUMENT = "Docs/Other Docs"
     DEVELOPMENT = "Development"
-    UNKNOWN = None
+    OTHER = "Other"
+    UNKNOWN = None  # Deprecated: Use OTHER instead
 
 
 class FileClassifier:
@@ -49,6 +50,7 @@ class FileClassifier:
     def classify(self, file_path: Path) -> FileCategory:
         """
         Classify a file based on its extension.
+        Returns FileCategory.OTHER for unknown extensions instead of UNKNOWN.
         
         Args:
             file_path: Path to the file to classify
@@ -59,9 +61,9 @@ class FileClassifier:
         # Get the extension in lowercase for case-insensitive matching
         extension = file_path.suffix.lower()
         
-        # Return UNKNOWN if no extension
+        # Return OTHER if no extension
         if not extension:
-            return FileCategory.UNKNOWN
+            return FileCategory.OTHER
         
         # Check each category
         if extension in self.image_extensions:
@@ -75,4 +77,4 @@ class FileClassifier:
         elif extension in self.development_extensions:
             return FileCategory.DEVELOPMENT
         else:
-            return FileCategory.UNKNOWN
+            return FileCategory.OTHER

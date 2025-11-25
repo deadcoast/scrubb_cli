@@ -311,3 +311,129 @@ class TestDryRunFormatter:
         assert "file.txt" in output
         assert "empty1" in output
         assert "empty2" in output
+    
+    def test_other_category_in_files_by_category(self):
+        """Test that OTHER category appears in files by category section."""
+        stats = DryRunStats(
+            files_to_move=3,
+            files_by_category={"Other": 2, "Images": 1},
+            file_operations=[
+                FileOperation(
+                    source=Path("/root/unknown1.xyz"),
+                    destination=Path("/root/Scrubbed/Other/unknown1.xyz"),
+                    category=FileCategory.OTHER
+                ),
+                FileOperation(
+                    source=Path("/root/unknown2.abc"),
+                    destination=Path("/root/Scrubbed/Other/unknown2.abc"),
+                    category=FileCategory.OTHER
+                ),
+                FileOperation(
+                    source=Path("/root/image.jpg"),
+                    destination=Path("/root/Scrubbed/Images/image.jpg"),
+                    category=FileCategory.IMAGE
+                )
+            ]
+        )
+        
+        output = DryRunFormatter.format_output(stats, Path("/root"))
+        
+        # Check that "Other" category appears in FILES BY CATEGORY section
+        assert " FILES BY CATEGORY" in output
+        assert "Other: 2 files" in output
+        assert "Images: 1 files" in output
+    
+    def test_other_category_in_file_operations(self):
+        """Test that OTHER category files appear in file operations section."""
+        stats = DryRunStats(
+            files_to_move=2,
+            files_by_category={"Other": 2},
+            file_operations=[
+                FileOperation(
+                    source=Path("/root/unknown1.xyz"),
+                    destination=Path("/root/Scrubbed/Other/unknown1.xyz"),
+                    category=FileCategory.OTHER
+                ),
+                FileOperation(
+                    source=Path("/root/unknown2.abc"),
+                    destination=Path("/root/Scrubbed/Other/unknown2.abc"),
+                    category=FileCategory.OTHER
+                )
+            ]
+        )
+        
+        output = DryRunFormatter.format_output(stats, Path("/root"))
+        
+        # Check that "Other" category appears as a header in FILE OPERATIONS
+        assert " FILE OPERATIONS" in output
+        assert "Other:" in output
+        
+        # Check that files are listed under Other category
+        assert "unknown1.xyz" in output
+        assert "unknown2.abc" in output
+    
+    def test_other_category_formatting_consistency(self):
+        """Test that OTHER category formatting is consistent with other categories."""
+        stats = DryRunStats(
+            files_to_move=4,
+            files_by_category={"Other": 2, "Images": 1, "Docs/Other Docs": 1},
+            file_operations=[
+                FileOperation(
+                    source=Path("/root/unknown.xyz"),
+                    destination=Path("/root/Scrubbed/Other/unknown.xyz"),
+                    category=FileCategory.OTHER
+                ),
+                FileOperation(
+                    source=Path("/root/unknown2.abc"),
+                    destination=Path("/root/Scrubbed/Other/unknown2.abc"),
+                    category=FileCategory.OTHER
+                ),
+                FileOperation(
+                    source=Path("/root/image.jpg"),
+                    destination=Path("/root/Scrubbed/Images/image.jpg"),
+                    category=FileCategory.IMAGE
+                ),
+                FileOperation(
+                    source=Path("/root/doc.pdf"),
+                    destination=Path("/root/Scrubbed/Docs/doc.pdf"),
+                    category=FileCategory.DOCUMENT
+                )
+            ]
+        )
+        
+        output = DryRunFormatter.format_output(stats, Path("/root"))
+        
+        # Verify all categories appear in FILES BY CATEGORY with same format
+        assert "Other: 2 files" in output
+        assert "Images: 1 files" in output
+        
+        # Verify all categories appear as headers in FILE OPERATIONS
+        assert "Other:" in output
+        assert "Images:" in output
+        
+        # Verify files are listed under their respective categories
+        lines = output.split("\n")
+        
+        # Find the FILE OPERATIONS section
+        in_file_ops = False
+        current_category = None
+        
+        for line in lines:
+            if " FILE OPERATIONS" in line:
+                in_file_ops = True
+                continue
+            
+            if in_file_ops:
+                # Check for category headers
+                if "Other:" in line:
+                    current_category = "Other"
+                elif "Images:" in line:
+                    current_category = "Images"
+                
+                # Verify files appear under correct category
+                if current_category == "Other":
+                    if "unknown.xyz" in line or "unknown2.abc" in line:
+                        assert "→" in line  # Should have arrow showing destination
+                elif current_category == "Images":
+                    if "image.jpg" in line:
+                        assert "→" in line

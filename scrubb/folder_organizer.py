@@ -105,6 +105,11 @@ class FolderOrganizer:
         Returns:
             OrganizationStats with results of the organization
         """
+        from .verbosity import VerbosityManager
+        import typer
+        
+        verbosity_manager = VerbosityManager.get_current()
+        
         # Create Scrubbed folder if it doesn't exist
         self.scrubbed_path.mkdir(exist_ok=True)
         
@@ -114,12 +119,20 @@ class FolderOrganizer:
         # Move each file to its category folder
         for file_path in files:
             category = self.classifier.classify(file_path)
-            if category != FileCategory.UNKNOWN:
-                self._move_file(file_path, category)
+            
+            # Log category assignment in verbose mode (Requirements 4.3)
+            if verbosity_manager.should_print_debug():
+                typer.echo(f"  {file_path.name} → {category.value}")
+            
+            self._move_file(file_path, category)
         
         # Remove empty folders
         removed_count = self._remove_empty_folders()
         self.stats.empty_folders_removed = removed_count
+        
+        # Log completion statistics (Requirements 4.5)
+        if verbosity_manager.should_print_info():
+            typer.echo(f"\nOperation complete: {self.stats.files_moved} files moved, {self.stats.empty_folders_removed} empty folders removed")
         
         return self.stats
     
@@ -130,6 +143,11 @@ class FolderOrganizer:
         Returns:
             DryRunStats with detailed information about what would happen
         """
+        from .verbosity import VerbosityManager
+        import typer
+        
+        verbosity_manager = VerbosityManager.get_current()
+        
         stats = DryRunStats()
         simulated_destinations = set()  # Track simulated file destinations
         
@@ -140,12 +158,9 @@ class FolderOrganizer:
         for file_path in files:
             category = self.classifier.classify(file_path)
             
-            # Track skipped files with unknown extensions
-            if category == FileCategory.UNKNOWN:
-                stats.skipped_files.append(
-                    SkippedFile(file_path, "Unknown extension")
-                )
-                continue
+            # Log category assignment in verbose mode (Requirements 4.3)
+            if verbosity_manager.should_print_debug():
+                typer.echo(f"  {file_path.name} → {category.value}")
             
             # Simulate destination path
             dest_path = self._simulate_destination(file_path, category)
@@ -213,6 +228,8 @@ class FolderOrganizer:
         Returns:
             List of Path objects for all files found
         """
+        from .verbosity import VerbosityManager
+        
         files = []
         
         # Use rglob to recursively find all files
@@ -228,6 +245,12 @@ class FolderOrganizer:
             except ValueError:
                 # File is not in Scrubbed folder, include it
                 files.append(item)
+        
+        # Log number of files discovered (Requirements 4.2)
+        verbosity_manager = VerbosityManager.get_current()
+        if verbosity_manager.should_print_info():
+            import typer
+            typer.echo(f"Files discovered: {len(files)}")
         
         return files
     
@@ -265,10 +288,15 @@ class FolderOrganizer:
             
             return True
             
-        except (PermissionError, OSError) as e:
-            # Handle errors gracefully
+        except PermissionError as e:
+            # Handle permission errors with specific message (Requirements 4.4)
             self.stats.errors += 1
-            self.stats.error_files.append(str(file_path))
+            self.stats.error_files.append(f"Permission denied: {file_path}")
+            return False
+        except OSError as e:
+            # Handle other OS errors with specific message (Requirements 4.4)
+            self.stats.errors += 1
+            self.stats.error_files.append(f"Failed to move {file_path}: {str(e)}")
             return False
     
     def _simulate_destination(self, file_path: Path, category: FileCategory) -> Path:
@@ -396,10 +424,14 @@ class FolderOrganizer:
                     # Now remove the directory
                     dir_path.rmdir()
                     removed_count += 1
-                except (PermissionError, OSError) as e:
-                    # Add to error tracking
+                except PermissionError as e:
+                    # Add to error tracking with specific message (Requirements 4.4)
                     self.stats.errors += 1
-                    self.stats.error_files.append(f"Could not remove directory: {dir_path}")
+                    self.stats.error_files.append(f"Permission denied removing directory: {dir_path}")
+                except OSError as e:
+                    # Add to error tracking with specific message (Requirements 4.4)
+                    self.stats.errors += 1
+                    self.stats.error_files.append(f"Failed to remove directory {dir_path}: {str(e)}")
         
         return removed_count
     
@@ -467,8 +499,7 @@ class FolderOrganizer:
                         continue
                     
                     # If file would be moved, ignore it
-                    category = self.classifier.classify(item)
-                    if category != FileCategory.UNKNOWN and item in files_to_move:
+                    if item in files_to_move:
                         continue
                     # File would remain, directory not empty
                     return False
