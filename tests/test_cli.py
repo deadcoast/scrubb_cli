@@ -345,8 +345,8 @@ def test_folder_command_error_display():
                 # Use --yes flag to bypass confirmation prompt
                 result = runner.invoke(app, ['folder', '--yes'])
                 
-                # Check that errors are reported
-                assert "Errors encountered:" in result.stdout
+                # Check that errors are reported (updated message)
+                assert "Critical errors encountered:" in result.stdout
                 assert "Permission denied" in result.stdout
 
 

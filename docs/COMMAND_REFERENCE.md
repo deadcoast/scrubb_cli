@@ -220,8 +220,16 @@ Run without --dry flag to execute these changes
 
 **Error Handling**:
 - Invalid path: Displays error message and exits
-- Permission errors: Logs error, continues processing other files
-- File access errors: Increments error counter, continues processing
+- File operation errors: Logged as critical errors, processing continues
+- Directory removal warnings: Non-critical warnings for OneDrive/cloud storage directories
+
+**Cloud Storage Compatibility**:
+
+When organizing files in **OneDrive** or other cloud-synced directories, you may see directory removal warnings. This is **normal and safe**:
+- OneDrive uses special "reparse points" with restricted permissions
+- Files are organized correctly; only empty directory removal is affected
+- Warnings are informational, not errors
+- Your cloud files remain safe and will sync normally
 
 **Dry-Run Mode Benefits**:
 - **Safe Preview**: See exactly what will happen before making changes

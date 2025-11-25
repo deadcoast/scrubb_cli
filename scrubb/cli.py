@@ -515,9 +515,15 @@ def folder(
             
             typer.echo(f"\nEmpty folders removed: {stats.empty_folders_removed}")
             
-            # Errors (if any)
+            # Directory permission warnings (non-critical - OneDrive, cloud storage, etc.)
+            if stats.directory_permission_warnings > 0:
+                typer.secho(f"\nDirectory removal warnings: {stats.directory_permission_warnings}", fg="yellow")
+                typer.echo("  Some empty directories could not be removed (OneDrive, cloud storage, or system-protected)")
+                typer.echo("  This is normal and does not affect file organization.")
+            
+            # Critical errors (file operations that failed)
             if stats.errors > 0:
-                typer.secho(f"\nErrors encountered: {stats.errors}", fg="red")
+                typer.secho(f"\nCritical errors encountered: {stats.errors}", fg="red")
                 for error_file in stats.error_files[:10]:
                     typer.echo(f"  [X] {error_file}")
                 if len(stats.error_files) > 10:

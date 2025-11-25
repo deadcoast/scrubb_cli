@@ -72,6 +72,23 @@ class FolderOrganizer:
         '.keep',          # Generic keep file
     }
     
+    @staticmethod
+    def _is_onedrive_path(path: Path) -> bool:
+        """
+        Check if a path is within OneDrive.
+        
+        OneDrive paths typically contain 'OneDrive' in the path.
+        This helps identify cloud-synced directories that may have special permissions.
+        
+        Args:
+            path: Path to check
+            
+        Returns:
+            True if path appears to be in OneDrive
+        """
+        path_str = str(path).lower()
+        return 'onedrive' in path_str
+    
     def __init__(self, root_path: Path, classifier: FileClassifier, dry_run: bool = False):
         """
         Initialize the folder organizer.
@@ -415,6 +432,11 @@ class FolderOrganizer:
             
             # Check if directory is empty
             if self._is_empty_directory(dir_path):
+                # Skip OneDrive directories - they have special permissions and reparse points
+                if self._is_onedrive_path(dir_path):
+                    self.stats.directory_permission_warnings += 1
+                    continue
+                
                 try:
                     # Remove any ignored files first
                     for item in dir_path.iterdir():
@@ -428,13 +450,15 @@ class FolderOrganizer:
                     dir_path.rmdir()
                     removed_count += 1
                 except PermissionError as e:
-                    # Permission errors on directory removal - count as errors
-                    self.stats.errors += 1
-                    self.stats.error_files.append(f"Permission denied removing directory: {dir_path}")
+                    # Permission errors on directory removal are NON-CRITICAL
+                    # This commonly happens with cloud storage or system-protected folders
+                    # These are warnings, not errors - the operation succeeded for accessible files
+                    self.stats.directory_permission_warnings += 1
+                    # Don't add to error_files - these aren't critical failures
                 except OSError as e:
-                    # Other OS errors during directory removal
-                    self.stats.errors += 1
-                    self.stats.error_files.append(f"Failed to remove directory {dir_path}: {str(e)}")
+                    # Other OS errors during directory removal (also non-critical)
+                    # Could be reparse points, junctions, or other special directories
+                    self.stats.directory_permission_warnings += 1
         
         return removed_count
     

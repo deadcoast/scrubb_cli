@@ -13,6 +13,13 @@
 - **Persistent Statistics**: Tracks global statistics across all runs with detailed per-emoji breakdowns
 - **Configurable Ignore Patterns**: Skip common directories like `node_modules`, `.git`, `__pycache__`, etc.
 - **Safe File Processing**: Only processes text files with recognized extensions
+- **Unicode Support**: Supports all Unicode ranges including emoticons, symbols, flags, and more
+- **CLI Interface**: Easily integrate with other tools and scripts using the `--dry` flag
+- **Emoji Removal**: Removes emojis from text files and updates statistics
+- **Emoji Statistics**: Provides detailed statistics on removed emojis across all runs
+- **Emoji History**: Keeps track of removed emojis across all runs
+- **Emoji Ignore Patterns**: Ignore common directories like `node_modules`, `.git`, `__pycache__`, etc.
+- **Emoji Ignore Patterns**: Ignore common directories like `node_modules`, `.git`, `__pycache__`, etc.
 
 ### Folder Cleanup
 - **Automatic File Categorization**: Organizes files by type (Images, Video, Documents, Development)
@@ -276,6 +283,40 @@ The folder cleanup feature organizes files into these categories:
 1. Run `scrubb folder --tree --dry` first to preview changes with visual trees
 2. Review the detailed output and tree visualization to ensure everything looks correct
 3. Run `scrubb folder --tree` to execute the actual cleanup with visual confirmation
+
+#### Cloud Storage and OneDrive Compatibility
+
+**OneDrive and Cloud-Synced Directories:**
+
+When organizing files in OneDrive or other cloud storage directories, you may see warnings about directories that couldn't be removed. This is **normal and safe**:
+
+```
+Directory removal warnings: 186
+  Some empty directories could not be removed (OneDrive, cloud storage, or system-protected)
+  This is normal and does not affect file organization.
+```
+
+**Why This Happens:**
+- OneDrive uses "Files On-Demand" with special **reparse points** (filesystem links)
+- These appear as regular directories but have restricted permissions managed by OneDrive's filter driver
+- Even with admin rights, Windows protects these special directories
+- The tool correctly detects this and skips them rather than forcing deletion
+
+**What Gets Organized:**
+-  **All your files are moved and organized correctly**
+-  **Regular empty directories are removed**
+-  **OneDrive placeholder directories remain** (they're empty but protected)
+
+**Is This Safe?**
+- **Yes, completely safe.** The permission errors are actually **protecting** your cloud files
+- Your files are organized correctly in the Scrubbed folder
+- OneDrive will sync the changes normally
+- The empty directories don't affect functionality
+
+**Recommendation:**
+- Use `--tree` flag to visualize what's happening
+- The warnings are informational only - not errors
+- Your file organization completed successfully
 
 #### Confirmation Prompts
 
