@@ -347,8 +347,7 @@ def test_folder_command_error_display():
                 
                 # Check that errors are reported
                 assert "Errors encountered:" in result.stdout
-                # The new format uses "Error files" without the colon in the title
-                assert "Error files" in result.stdout
+                assert "Permission denied" in result.stdout
 
 
 def test_folder_mode_exclusivity():

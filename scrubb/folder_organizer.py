@@ -16,6 +16,7 @@ class OrganizationStats:
     empty_folders_removed: int = 0
     errors: int = 0
     error_files: List[str] = field(default_factory=list)
+    directory_permission_warnings: int = 0  # Separate counter for non-critical warnings
 
 
 @dataclass
@@ -97,6 +98,8 @@ class FolderOrganizer:
             return self._organize_dry_run()
         else:
             return self._organize_actual()
+    
+
     
     def _organize_actual(self) -> OrganizationStats:
         """
@@ -289,12 +292,12 @@ class FolderOrganizer:
             return True
             
         except PermissionError as e:
-            # Handle permission errors with specific message (Requirements 4.4)
+            # File move permission errors are CRITICAL
             self.stats.errors += 1
             self.stats.error_files.append(f"Permission denied: {file_path}")
             return False
         except OSError as e:
-            # Handle other OS errors with specific message (Requirements 4.4)
+            # Other file move errors are also CRITICAL
             self.stats.errors += 1
             self.stats.error_files.append(f"Failed to move {file_path}: {str(e)}")
             return False
@@ -425,11 +428,11 @@ class FolderOrganizer:
                     dir_path.rmdir()
                     removed_count += 1
                 except PermissionError as e:
-                    # Add to error tracking with specific message (Requirements 4.4)
+                    # Permission errors on directory removal - count as errors
                     self.stats.errors += 1
                     self.stats.error_files.append(f"Permission denied removing directory: {dir_path}")
                 except OSError as e:
-                    # Add to error tracking with specific message (Requirements 4.4)
+                    # Other OS errors during directory removal
                     self.stats.errors += 1
                     self.stats.error_files.append(f"Failed to remove directory {dir_path}: {str(e)}")
         

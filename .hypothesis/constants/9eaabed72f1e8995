@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\operation_results.py
+# hypothesis_version: 6.148.2
+
+[100.0, 100, '=', 'critical', 'directory_create', 'directory_remove', 'file_move', 'info', 'permission', 'warning']

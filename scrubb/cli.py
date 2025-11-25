@@ -498,29 +498,27 @@ def folder(
             formatted_output = DryRunFormatter.format_output(stats, target_path)
             typer.echo(formatted_output)
     else:
-        # Actual mode - show completion information (shown in NORMAL and VERBOSE modes)
+        # Actual mode - show completion information
         if verbosity_manager.should_print_summary():
-            typer.echo("\n" + "="*50)
+            # Header
+            typer.echo("\n" + "=" * 50)
             typer.secho("Folder cleanup complete!", fg="green", bold=True)
-            typer.echo("="*50)
+            typer.echo("=" * 50 + "\n")
             
-            typer.secho(f"\nFiles moved: {stats.files_moved}", fg="cyan", bold=True)
+            # Stats
+            typer.echo(f"Files moved: {stats.files_moved}")
             
             if stats.files_by_category:
-                typer.secho("\nFiles moved by category:", fg="cyan")
+                typer.echo("\nFiles moved by category:")
                 for category, count in sorted(stats.files_by_category.items()):
                     typer.echo(f"  {category}: {count}")
             
-            typer.secho(f"\nEmpty folders removed: {stats.empty_folders_removed}", fg="cyan", bold=True)
-        
-        # Errors are always shown
-        if stats.errors > 0:
-            from .output_formatter import OutputFormatter
-            from rich.console import Console
+            typer.echo(f"\nEmpty folders removed: {stats.empty_folders_removed}")
             
-            console = Console()
-            formatter = OutputFormatter(console)
-            
-            typer.secho(f"\nErrors encountered: {stats.errors}", fg="red", bold=True)
-            if stats.error_files:
-                formatter.print_file_list(stats.error_files, status="error", title="Error files")
+            # Errors (if any)
+            if stats.errors > 0:
+                typer.secho(f"\nErrors encountered: {stats.errors}", fg="red")
+                for error_file in stats.error_files[:10]:
+                    typer.echo(f"  [X] {error_file}")
+                if len(stats.error_files) > 10:
+                    typer.echo(f"  ... and {len(stats.error_files) - 10} more errors")
