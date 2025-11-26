@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\business\classifier.py
+# hypothesis_version: 6.148.2
+
+['.avi', '.bash', '.bmp', '.c', '.cpp', '.css', '.csv', '.doc', '.docx', '.flv', '.gif', '.go', '.h', '.hpp', '.html', '.ico', '.java', '.jpeg', '.jpg', '.js', '.json', '.jsx', '.kt', '.m4v', '.markdown', '.md', '.mkv', '.mov', '.mp4', '.mpeg', '.mpg', '.odt', '.pdf', '.php', '.png', '.ppt', '.pptx', '.py', '.r', '.rb', '.rs', '.rtf', '.scss', '.sh', '.sql', '.svg', '.swift', '.tif', '.tiff', '.toml', '.ts', '.tsx', '.txt', '.webm', '.webp', '.wmv', '.xls', '.xlsx', '.xml', '.yaml', '.yml', 'Development', 'Docs/Markdown', 'Docs/Other Docs', 'Images', 'Other', 'Video']

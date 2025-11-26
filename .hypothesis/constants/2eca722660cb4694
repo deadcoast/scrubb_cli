@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\io\path_validator.py
+# hypothesis_version: 6.148.2
+
+['\x00', '..', 'error', 'error_type', 'path', 'resolved_path', 'resolved_root', 'root']

@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\AppData\Roaming\Python\Python313\site-packages\grapheme\__init__.py
+# hypothesis_version: 6.148.2
+
+['UNICODE_VERSION', 'contains', 'endswith', 'grapheme_lengths', 'graphemes', 'length', 'safe_split_index', 'slice', 'startswith']

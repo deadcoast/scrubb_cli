@@ -2,11 +2,11 @@
 
 import pytest
 from pathlib import Path
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, strategies as st, settings, HealthCheck
 
 from scrubb.tree_models import DirectoryNode, DirectoryStatistics, StatisticsDelta
 from scrubb.file_classifier import FileClassifier, FileCategory
-from scrubb.statistics_calculator import StatisticsCalculator
+from scrubb.business.statistics import StatisticsCalculator
 
 
 # Strategy for generating file categories
@@ -81,7 +81,7 @@ def directory_tree_strategy(draw, current_depth=0, max_depth=2):
 class TestStatisticsCalculation:
     """Property tests for statistics calculation correctness."""
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow])
     @given(tree=directory_tree_strategy())
     def test_statistics_calculation_correctness(self, tree):
         """
@@ -91,8 +91,7 @@ class TestStatisticsCalculation:
         For any directory tree, the sum of files in all categories should equal
         the total file count in the statistics.
         """
-        classifier = FileClassifier()
-        stats = StatisticsCalculator.calculate(tree, classifier)
+        stats = StatisticsCalculator.calculate(tree)
         
         # Calculate expected total from categories
         total_from_categories = sum(stats.files_by_category.values())
@@ -122,7 +121,7 @@ class TestStatisticsCalculation:
 class TestDeltaCalculation:
     """Property tests for delta calculation symmetry."""
     
-    @settings(max_examples=100)
+    @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow])
     @given(
         tree1=directory_tree_strategy(),
         tree2=directory_tree_strategy()
@@ -135,11 +134,9 @@ class TestDeltaCalculation:
         For any two directory snapshots A and B, the delta from A to B should be
         the negation of the delta from B to A.
         """
-        classifier = FileClassifier()
-        
         # Calculate statistics for both trees
-        stats1 = StatisticsCalculator.calculate(tree1, classifier)
-        stats2 = StatisticsCalculator.calculate(tree2, classifier)
+        stats1 = StatisticsCalculator.calculate(tree1)
+        stats2 = StatisticsCalculator.calculate(tree2)
         
         # Calculate deltas in both directions
         delta_1_to_2 = StatisticsCalculator.calculate_delta(stats1, stats2)

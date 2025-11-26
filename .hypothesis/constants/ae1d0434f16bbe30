@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\AppData\Roaming\Python\Python313\site-packages\grapheme\grapheme_property_group.py
+# hypothesis_version: 6.148.2
+
+['CR', 'Control', 'Extend', 'L', 'LF', 'LV', 'LVT', 'Other', 'Prepend', 'Regional_Indicator', 'SpacingMark', 'T', 'V', 'ZWJ', 'r', 'ranges', 'single_chars']

@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\core\validation.py
+# hypothesis_version: 6.148.2
+
+['\x00', 'Path cannot be empty', 'Path does not exist', 'Path is not a file', 'error', 'path', 'pattern', 'type', 'value']

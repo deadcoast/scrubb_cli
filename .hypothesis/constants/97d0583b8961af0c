@@ -1,0 +1,4 @@
+# file: C:\Users\ryanf\github\done\scrubb_cli\scrubb\cli.py
+# hypothesis_version: 6.148.2
+
+['--dry', '--edit', '--quiet', '--reset', '--show', '--top', '--tree', '--verbose', '--yes', '-p', '-q', '-v', '-y', 'allow_extra_args', 'c', 'e', 'emoji', 'f', 'main', 's']
