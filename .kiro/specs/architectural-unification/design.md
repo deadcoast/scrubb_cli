@@ -44,30 +44,30 @@ This design document specifies a comprehensive architectural refactoring that el
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     CLI Layer                            │
-│  - Command handlers                                      │
-│  - Input validation                                      │
-│  - Output formatting                                     │
-│  - User interaction                                      │
+│                     CLI Layer                           │
+│  - Command handlers                                     │
+│  - Input validation                                     │
+│  - Output formatting                                    │
+│  - User interaction                                     │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                  Business Logic Layer                    │
-│  - File organization                                     │
-│  - File classification                                   │
-│  - Conflict resolution                                   │
-│  - Tree simulation                                       │
-│  - Statistics calculation                                │
+│                  Business Logic Layer                   │
+│  - File organization                                    │
+│  - File classification                                  │
+│  - Conflict resolution                                  │
+│  - Tree simulation                                      │
+│  - Statistics calculation                               │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                      I/O Layer                           │
-│  - File operations                                       │
-│  - Directory operations                                  │
-│  - Path resolution                                       │
-│  - Permission handling                                   │
+│                      I/O Layer                          │
+│  - File operations                                      │
+│  - Directory operations                                 │
+│  - Path resolution                                      │
+│  - Permission handling                                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
